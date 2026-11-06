@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Relief Displacement Across the Aerial Photo: Radial Patterns and Terrain Effects</title>
+<style>
+  :root{
+    --bg:#f3f6fa; --panel:#fff; --ink:#132238; --muted:#67778d; --line:#dbe3ed;
+    --blue:#1769e0; --green:#17845d; --red:#c83c3c; --orange:#e56b25; --purple:#7447d6;
+    --shadow:0 10px 28px rgba(28,48,77,.08); --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  .app{min-height:100vh}
+  header{background:#0e1c2f;color:white;padding:18px 24px 16px;box-shadow:0 4px 18px rgba(10,24,46,.18)}
+  .head{max-width:1500px;margin:auto;display:flex;justify-content:space-between;gap:22px;align-items:flex-start}
+  h1{font-size:25px;margin:0 0 5px;line-height:1.1;letter-spacing:-.02em}
+  .sub{font-size:13.5px;color:#bdc9da;max-width:900px;line-height:1.45}
+  .formula{background:#172a46;border:1px solid #2d4566;border-radius:12px;padding:9px 14px;white-space:nowrap}
+  .formula b{font:700 27px Georgia,"Times New Roman",serif}.formula span{display:block;font-size:10.5px;color:#aebfd5;margin-top:2px}
+  main{max-width:1500px;margin:14px auto 24px;padding:0 18px;display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .controls{padding:15px;align-self:start;position:sticky;top:12px}
+  .controls h2{font-size:15px;margin:0 0 10px}
+  .ctrl{padding:11px 0;border-top:1px solid #edf1f5}.ctrl:first-of-type{border-top:0}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
+  label{font-size:12.5px;font-weight:760;color:#2a3b55}
+  .val{font-size:12.5px;font-weight:800;color:#0c5fc8;background:#edf5ff;padding:3px 7px;border-radius:7px;min-width:74px;text-align:center}
+  input[type=range]{width:100%;accent-color:var(--blue)}
+  .ends{display:flex;justify-content:space-between;font-size:10px;color:#91a0b3;margin-top:2px}
+  .hint{font-size:10.8px;color:var(--muted);line-height:1.4;margin-top:5px}
+  .checkrow{display:flex;gap:8px;align-items:center;font-size:11.5px;color:#52647a;margin-top:8px}
+  button{border:1px solid #ccd7e4;background:white;color:#30445f;padding:8px 10px;border-radius:9px;font-size:12px;font-weight:750;cursor:pointer}
+  button:hover{background:#f7faff;border-color:#9cb2cf}
+  .workspace{min-width:0}
+  .grid{display:grid;grid-template-columns:minmax(0,.90fr) minmax(0,1.10fr);gap:14px}
+  .card{overflow:hidden;min-width:0}
+  .cardhead{padding:12px 14px;border-bottom:1px solid #e6ecf3;display:flex;justify-content:space-between;gap:10px;align-items:center}
+  .cardhead h3{font-size:14px;margin:0}.cardhead span{font-size:10.5px;color:#718198}
+  .canvas{height:560px;background:#f9fbfe}
+  svg{width:100%;height:100%;display:block}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;padding:9px 12px;border-top:1px solid #e7edf4;background:#fbfcfe;font-size:10.5px;color:#5e6e83}
+  .legend i{display:inline-block;width:13px;height:3px;border-radius:3px;vertical-align:middle;margin-right:5px}
+  .properties{margin-top:14px;padding:14px 16px}
+  .properties h2{font-size:14px;margin:0 0 10px}
+  .props{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  .prop{border:1px solid #e1e8f1;border-radius:10px;padding:10px;background:#fcfdff}
+  .prop b{display:block;font-size:11.5px;margin-bottom:4px;color:#2b3e58}.prop span{font-size:10.6px;line-height:1.4;color:#68798e}
+  @media(max-width:1100px){main{grid-template-columns:1fr}.controls{position:static}.grid{grid-template-columns:1fr}.canvas{height:500px}.props{grid-template-columns:1fr 1fr}}
+  @media(max-width:650px){header{padding:15px 14px}.head{flex-direction:column}main{padding:0 10px}.canvas{height:420px}.props{grid-template-columns:1fr}.formula b{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="head">
+    <div>
+      <h1>Relief Displacement Across the Aerial Photo: Radial Patterns and Terrain Effects</h1>
+      <div class="sub">A separate classroom demo showing the radial pattern of relief displacement across a flat study site. The left panel is a vertical aerial-photo view; the right panel shows the same grid of vertical objects in 3D with an aircraft above the site.</div>
+    </div>
+    <div class="formula"><b>d = hr/H</b><span>r = PP → top image</span></div>
+  </div>
+</header>
+<main>
+  <aside class="panel controls">
+    <h2>Scene controls</h2>
+    <div class="ctrl">
+      <div class="row"><label for="h">Vertical-object height, h</label><span class="val" id="hVal">240 m</span></div>
+      <input id="h" type="range" min="20" max="260" step="10" value="240" />
+      <div class="ends"><span>20 m</span><span>260 m</span></div>
+      <div class="hint">In the basic case, all vertical objects use the same height so the radial pattern is easy to compare.</div>
+    </div>
+    <div class="ctrl">
+      <div class="row"><label for="H">Flight height, H</label><span class="val" id="HVal">1500 m</span></div>
+      <input id="H" type="range" min="700" max="4500" step="100" value="1500" />
+      <div class="ends"><span>700 m</span><span>4500 m</span></div>
+      <div class="hint">Aircraft height above the flat ground surface.</div>
+    </div>
+    <div class="ctrl">
+      <div class="row"><label for="spacing">Object spacing</label><span class="val" id="spacingVal">200 m</span></div>
+      <input id="spacing" type="range" min="140" max="260" step="20" value="200" />
+      <div class="ends"><span>140 m</span><span>260 m</span></div>
+      <div class="hint">Changes the real-world spacing of the vertical-object grid while keeping the study site flat.</div>
+    </div>
+    <div class="ctrl">
+      <label>Display options</label>
+      <label class="checkrow"><input id="showVectors" type="checkbox" checked /> show all displacement vectors</label>
+      <label class="checkrow"><input id="showRays" type="checkbox" checked /> show sample camera rays in 3D</label>
+    </div>
+    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+      <button id="randomBtn">Randomize heights</button>
+      <button id="uniformBtn">Restore uniform heights</button>
+      <button id="resetBtn">Reset demo</button>
+    </div>
+    <div class="hint" style="margin-top:10px">The 3D panel includes a translucent <b>red top surface</b> above a <b>green ground surface</b>, with grey vertical objects between them. The objects now span most of the field of view so the radial displacement pattern is easy to see. In the uniform-height case the top surface is flat; after randomization it becomes irregular, simulating terrain/elevation variation.</div>
+  </aside>
+
+  <section class="workspace">
+    <div class="grid">
+      <article class="panel card">
+        <div class="cardhead"><h3>Vertical aerial-photo view</h3><span>flat site · PP at center</span></div>
+        <div class="canvas"><svg id="photoSvg" viewBox="0 0 760 560" aria-label="Vertical aerial photo with radial relief displacement"></svg></div>
+        <div class="legend"><span><i style="background:#1769e0"></i>radial displacement pattern from PP</span><span><i style="background:#17845d"></i>vertical-object base image</span><span><i style="background:#c83c3c"></i>vertical-object top image</span><span><i style="background:#e56b25"></i>relief displacement d</span></div>
+      </article>
+      <article class="panel card">
+        <div class="cardhead"><h3>3D study-site view</h3><span>same vertical objects · aircraft above</span></div>
+        <div class="canvas"><svg id="sceneSvg" viewBox="0 0 760 560" aria-label="3D flat study site with aircraft and vertical objects"></svg></div>
+        <div class="legend"><span><i style="background:#7a8087"></i>vertical objects</span><span><i style="background:#c83c3c"></i>top surface</span><span><i style="background:#17845d"></i>ground surface</span><span><i style="background:#7447d6"></i>sample rays</span><span><i style="background:#526b84"></i>flight height H</span></div>
+      </article>
+    </div>
+
+    <article class="panel properties">
+      <h2>What students should notice</h2>
+      <div class="props">
+        <div class="prop"><b>1. Radial direction</b><span>Every top image is displaced directly away from PP along its own radial line.</span></div>
+        <div class="prop"><b>2. Distance from PP</b><span>At the same h and H, vertical objects farther from PP have larger d.</span></div>
+        <div class="prop"><b>3. Object height</b><span>Increasing vertical-object height h increases the separation between base and top images.</span></div>
+        <div class="prop"><b>4. Flight height</b><span>Increasing H moves images inward and reduces relief displacement across the entire photo.</span></div>
+        <div class="prop"><b>5. Terrain variation</b><span>If object heights vary randomly, the displacement pattern becomes irregular. In mountain or uneven terrain, this makes relief displacement harder to recognize and harder to remove.</span></div>
+      </div>
+    </article>
+  </section>
+</main>
+</div>
+<script>
+(() => {
+  const f = 152; // mm
+  const siteHalf = 620; // m, fixed flat study-site half-width
+  const state = {
+    h:240,H:1500,spacing:200,showVectors:true,showRays:true,
+    mode:'uniform', // uniform | random
+    offsets:{},
+    surfaceColor:'rgba(200, 60, 60, 0.42)'
+  };
+  const $ = s => document.querySelector(s);
+  const hEl=$('#h'), HEl=$('#H'), spEl=$('#spacing');
+
+  hEl.addEventListener('input',()=>{state.h=+hEl.value; if(state.h>state.H*0.55){state.h=Math.floor(state.H*.55/10)*10;hEl.value=state.h;} render();});
+  HEl.addEventListener('input',()=>{state.H=+HEl.value; if(state.h>state.H*0.55){state.h=Math.floor(state.H*.55/10)*10;hEl.value=state.h;} render();});
+  spEl.addEventListener('input',()=>{state.spacing=+spEl.value; if(state.mode==='random') generateRandomOffsets(); render();});
+  $('#showVectors').addEventListener('change',e=>{state.showVectors=e.target.checked;render();});
+  $('#showRays').addEventListener('change',e=>{state.showRays=e.target.checked;render();});
+  $('#randomBtn').addEventListener('click',()=>{state.mode='random'; generateRandomOffsets(); render();});
+  $('#uniformBtn').addEventListener('click',()=>{state.mode='uniform'; state.offsets={}; render();});
+  $('#resetBtn').addEventListener('click',()=>{
+    state.h=240;state.H=1500;state.spacing=200;state.showVectors=true;state.showRays=true;state.mode='uniform';state.offsets={};
+    hEl.value=240;HEl.value=1500;spEl.value=200;$('#showVectors').checked=true;$('#showRays').checked=true;render();
+  });
+
+  function fmt(v,n=1){ return Number(v).toFixed(n); }
+  function key(x,y){ return `${x},${y}`; }
+
+  function groundPoints(){
+    const pts=[];
+    const s=state.spacing;
+    for(let y=-3*s;y<=3*s;y+=s){
+      for(let x=-3*s;x<=3*s;x+=s){
+        if(Math.abs(x)<=siteHalf && Math.abs(y)<=siteHalf) pts.push({x,y});
+      }
+    }
+    return pts;
+  }
+
+  function generateRandomOffsets(){
+    const pts=groundPoints();
+    const maxOffset=Math.max(18, Math.min(55, state.h*0.28));
+    const obj={};
+    pts.forEach((p,idx)=>{
+      const smooth = 0.55*Math.sin((p.x/state.spacing)*0.9) + 0.35*Math.cos((p.y/state.spacing)*1.1);
+      const noise = (Math.random()*2-1)*0.75;
+      let off = (smooth + noise) * maxOffset * 0.75;
+      off = Math.max(-maxOffset, Math.min(maxOffset, off));
+      obj[key(p.x,p.y)] = Math.round(off);
+    });
+    state.offsets=obj;
+  }
+
+  function objectHeightAt(p){
+    if(state.mode!=='random') return state.h;
+    const off=state.offsets[key(p.x,p.y)] || 0;
+    return Math.max(15, state.h + off);
+  }
+
+  function imgForGround(x,y,hObj){
+    const xb=f*x/state.H, yb=f*y/state.H;
+    const xt=f*x/(state.H-hObj), yt=f*y/(state.H-hObj);
+    const rTop=Math.hypot(xt,yt);
+    const rBase=Math.hypot(xb,yb);
+    return {xb,yb,xt,yt,rTop,rBase,d:rTop-rBase};
+  }
+
+  function drawPhoto(){
+    const svg=$('#photoSvg'), cx=380, cy=280;
+    const pts=groundPoints();
+    // Use a strong classroom zoom by default. Only reduce it when an extreme
+    // h/H combination would otherwise push top images outside the photo frame.
+    const projected=pts.map(p=>imgForGround(p.x,p.y,objectHeightAt(p)));
+    const maxComponent=Math.max(...projected.flatMap(m=>[Math.abs(m.xt),Math.abs(m.yt)]),1);
+    const photoScale=Math.min(3.9, 252/maxComponent); // px/mm; fills most of the photo without clipping
+    const bg=[];
+    for(let i=0;i<7;i++) bg.push(`<line x1="36" y1="${76+i*68}" x2="724" y2="${105+i*58}" stroke="#dce6d8" stroke-width="1"/>`);
+    for(let i=0;i<9;i++) bg.push(`<line x1="${110+i*67}" y1="30" x2="${110+i*67}" y2="530" stroke="#dce6d8" stroke-width="1"/>`);
+
+    const objects=pts.map(p=>{
+      const hObj=objectHeightAt(p);
+      const m=imgForGround(p.x,p.y,hObj);
+      const bx=cx+m.xb*photoScale, by=cy-m.yb*photoScale;
+      const tx=cx+m.xt*photoScale, ty=cy-m.yt*photoScale;
+      const rr=m.rTop;
+      const vec=state.showVectors?`<line x1="${bx}" y1="${by}" x2="${tx}" y2="${ty}" stroke="#e56b25" stroke-width="2.4" opacity=".96" marker-end="url(#dArrow)"/>`:'';
+      const radial=state.showVectors?`<line x1="${cx}" y1="${cy}" x2="${tx}" y2="${ty}" stroke="#1769e0" stroke-width="1.05" opacity=".24"/>`:'';
+      return `${radial}${vec}<circle cx="${bx}" cy="${by}" r="4.8" fill="#fff" stroke="#17845d" stroke-width="2.6"/><circle cx="${tx}" cy="${ty}" r="4.8" fill="#fff" stroke="#c83c3c" stroke-width="2.6"/>`;
+    }).join('');
+
+    const caseTitle = state.mode==='uniform' ? 'UNIFORM-HEIGHT CASE' : 'RANDOM-HEIGHT / TERRAIN-VARIATION CASE';
+    const caseLine1 = state.mode==='uniform' ? 'Displacement vectors radiate from PP; their lengths grow systematically outward' : 'Directions still radiate from PP, but vector lengths now vary irregularly';
+    const caseLine2 = state.mode==='uniform' ? 'Farther objects show larger d' : 'This mimics uneven terrain and makes d harder to detect';
+
+    svg.innerHTML=`
+      <defs>
+        <pattern id="grass" width="28" height="28" patternUnits="userSpaceOnUse"><rect width="28" height="28" fill="#eef4e9"/><path d="M0 14H28M14 0V28" stroke="#e1eadd" stroke-width="1"/></pattern>
+        <marker id="dArrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#e56b25"/></marker>
+      </defs>
+      <rect width="760" height="560" fill="#f9fbfe"/>
+      <rect x="24" y="18" width="712" height="524" rx="10" fill="url(#grass)" stroke="#aebdca" stroke-width="2"/>
+      ${bg.join('')}
+      <line x1="${cx}" y1="28" x2="${cx}" y2="532" stroke="#bccbd8" stroke-width="1" stroke-dasharray="5 5"/>
+      <line x1="36" y1="${cy}" x2="724" y2="${cy}" stroke="#bccbd8" stroke-width="1" stroke-dasharray="5 5"/>
+      ${objects}
+      <g><line x1="${cx-13}" y1="${cy}" x2="${cx+13}" y2="${cy}" stroke="#243a55" stroke-width="2"/><line x1="${cx}" y1="${cy-13}" x2="${cx}" y2="${cy+13}" stroke="#243a55" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="4" fill="#fff" stroke="#243a55" stroke-width="2"/><text x="${cx+12}" y="${cy+18}" font-size="12" font-weight="800" fill="#243a55">PP</text></g>
+      <g transform="translate(634 76)"><path d="M7 22V5H2L12-8L22 5H17V22Z" fill="#203b5b"/><text x="27" y="8" font-size="11" font-weight="800" fill="#203b5b">N</text></g>
+      <g transform="translate(96 78)"><rect width="280" height="80" rx="8" fill="#fff" opacity=".95" stroke="#d1dae5"/><text x="11" y="18" font-size="10" font-weight="800" fill="#435870">${caseTitle}</text><text x="11" y="36" font-size="10.6" fill="#62758c">${caseLine1}</text><text x="11" y="50" font-size="10.6" fill="#62758c">${caseLine2}</text><text x="11" y="63" font-size="9.8" fill="#7a899b">Vectors are emphasized for classroom visibility</text></g>
+    `;
+  }
+
+  function drawScene(){
+    const svg=$('#sceneSvg'), pts=groundPoints();
+    const base0={x:370,y:414};
+    const Cx=base0.x;
+    const Hfrac=(state.H-700)/(4500-700);
+    const Cy=92-Hfrac*32;
+    const sx=0.35, sy=0.095;
+    const gx=0.15, gy=0.08;
+    function project(x,y,z=0){
+      return {x:base0.x + x*sx + y*gx, y:base0.y - x*sy + y*gy - z*0.45};
+    }
+    const site=[project(-siteHalf,-siteHalf),project(siteHalf,-siteHalf),project(siteHalf,siteHalf),project(-siteHalf,siteHalf)];
+    const gridVals=[...new Set(pts.map(p=>p.x))].sort((a,b)=>a-b);
+    const lines=[];
+    for(let k of gridVals){
+      const q1=project(-siteHalf,k), q2=project(siteHalf,k);
+      lines.push(`<line x1="${q1.x}" y1="${q1.y}" x2="${q2.x}" y2="${q2.y}" stroke="#c9ddc9" stroke-width="1"/>`);
+      const r1=project(k,-siteHalf), r2=project(k,siteHalf);
+      lines.push(`<line x1="${r1.x}" y1="${r1.y}" x2="${r2.x}" y2="${r2.y}" stroke="#c9ddc9" stroke-width="1"/>`);
+    }
+    let sample=null;
+    const topMap={};
+    const baseMap={};
+    pts.forEach(p=>{
+      const hObj=objectHeightAt(p);
+      const b=project(p.x,p.y,0), t=project(p.x,p.y,hObj);
+      baseMap[key(p.x,p.y)] = {b,t,hObj,p};
+      topMap[key(p.x,p.y)] = t;
+      const dist=Math.hypot(p.x,p.y);
+      if(!sample||dist>sample.dist) sample={p,b,t,dist,hObj};
+    });
+
+    const surfacePolys=[];
+    const surfaceGridLines=[];
+    for(let yi=0; yi<gridVals.length-1; yi++){
+      for(let xi=0; xi<gridVals.length-1; xi++){
+        const x1=gridVals[xi], x2=gridVals[xi+1], y1=gridVals[yi], y2=gridVals[yi+1];
+        const p1=topMap[key(x1,y1)], p2=topMap[key(x2,y1)], p3=topMap[key(x2,y2)], p4=topMap[key(x1,y2)];
+        if(!(p1&&p2&&p3&&p4)) continue;
+        surfacePolys.push(`<polygon points="${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y} ${p4.x},${p4.y}" fill="${state.surfaceColor}" stroke="rgba(150,40,40,.48)" stroke-width="1.3"/>`);
+      }
+    }
+    for(let y of gridVals){
+      let ptsLine=[];
+      for(let x of gridVals){ const p=topMap[key(x,y)]; if(p) ptsLine.push(`${p.x},${p.y}`); }
+      if(ptsLine.length>1) surfaceGridLines.push(`<polyline points="${ptsLine.join(' ')}" fill="none" stroke="rgba(25,77,87,.65)" stroke-width="1.5"/>`);
+    }
+    for(let x of gridVals){
+      let ptsLine=[];
+      for(let y of gridVals){ const p=topMap[key(x,y)]; if(p) ptsLine.push(`${p.x},${p.y}`); }
+      if(ptsLine.length>1) surfaceGridLines.push(`<polyline points="${ptsLine.join(' ')}" fill="none" stroke="rgba(25,77,87,.65)" stroke-width="1.5"/>`);
+    }
+
+    const objectsSvg=pts.map(p=>{
+      const info=baseMap[key(p.x,p.y)];
+      return `<line x1="${info.b.x}" y1="${info.b.y}" x2="${info.t.x}" y2="${info.t.y}" stroke="#808080" stroke-width="9"/><rect x="${info.t.x-8}" y="${info.t.y-4}" width="20" height="10" rx="2" fill="#9a9a9a" stroke="#666666"/>`;
+    }).join('');
+
+    const nadir=project(0,0,0);
+    let rays='';
+    if(state.showRays && sample){
+      rays=`<line x1="${Cx}" y1="${Cy}" x2="${sample.b.x}" y2="${sample.b.y}" stroke="#17845d" stroke-width="2.2" opacity=".9"/><line x1="${Cx}" y1="${Cy}" x2="${sample.t.x}" y2="${sample.t.y}" stroke="#7447d6" stroke-width="2.2" opacity=".95"/>`;
+    }
+    const caseTitle = state.mode==='uniform' ? 'UNIFORM TOP SURFACE' : 'IRREGULAR TOP SURFACE';
+    const caseLine1 = state.mode==='uniform' ? 'All vertical objects have the same height, so the top surface is flat' : 'Random object heights warp the top surface like uneven terrain';
+    const caseLine2 = state.mode==='uniform' ? 'This makes the radial pattern in the aerial photo easy to see' : 'This disturbs the clean displacement pattern across the field of view';
+
+    svg.innerHTML=`
+      <rect width="760" height="560" fill="#f8fbff"/>
+      <polygon points="${site.map(p=>`${p.x},${p.y}`).join(' ')}" fill="#e7f3e7" stroke="#9fbd9f" stroke-width="2"/>
+      ${lines.join('')}
+      ${surfacePolys.join('')}
+      ${surfaceGridLines.join('')}
+      ${objectsSvg}
+      ${rays}
+      <line x1="${Cx}" y1="${Cy}" x2="${nadir.x}" y2="${nadir.y}" stroke="#617389" stroke-width="1.8" stroke-dasharray="6 5"/>
+      <text x="${Cx+12}" y="${(Cy+nadir.y)/2}" font-size="12" font-weight="800" fill="#52657c">H = ${state.H} m</text>
+      <g transform="translate(${Cx-50} ${Cy-22})"><path d="M8 18L43 18L58 13L43 11L32 5L27 5L31 11L18 11L14 7L10 7L11 11L0 13Z" fill="#1f3b5e"/><circle cx="17" cy="15" r="3" fill="#a8cfff"/></g>
+      <text x="${Cx+30}" y="${Cy-15}" font-size="11" font-weight="800" fill="#1f3b5e">aircraft / camera</text>
+      <circle cx="${nadir.x}" cy="${nadir.y}" r="4" fill="#243a55"/><text x="${nadir.x+8}" y="${nadir.y+18}" font-size="10.5" fill="#52657c">nadir / PP ground projection</text>
+      <text x="${sample.t.x+10}" y="${(sample.t.y+sample.b.y)/2}" font-size="11.5" font-weight="800" fill="#b52d2d">h ≈ ${sample.hObj.toFixed(0)} m</text>
+      <g transform="translate(492 36)"><rect width="228" height="82" rx="8" fill="#fff" opacity=".95" stroke="#d1dae5"/><text x="11" y="18" font-size="10" font-weight="800" fill="#435870">${caseTitle}</text><text x="11" y="36" font-size="10.6" fill="#62758c">${caseLine1}</text><text x="11" y="50" font-size="10.6" fill="#62758c">${caseLine2}</text><text x="11" y="64" font-size="10.6" fill="#62758c">Red top surface and green ground match the 2D view</text></g>
+      <text x="104" y="528" font-size="10" fill="#718197">The enlarged 3D site uses most of the panel. Grey vertical objects connect the green ground surface to the red top surface, making uniform versus irregular elevation patterns easy to compare.</text>
+    `;
+  }
+
+  function render(){
+    $('#hVal').textContent=`${state.h} m`;
+    $('#HVal').textContent=`${state.H} m`;
+    $('#spacingVal').textContent=`${state.spacing} m`;
+    drawPhoto(); drawScene();
+  }
+  render();
+})();
+</script>
+</body>
+</html>

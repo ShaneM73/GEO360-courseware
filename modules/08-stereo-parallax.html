@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Stereo Vision and Parallax in Aerial Photogrammetry</title>
+<style>
+  :root{
+    --bg:#f3f6fa; --panel:#fff; --ink:#132238; --muted:#66778e; --line:#dbe3ed;
+    --blue:#1769e0; --green:#17845d; --red:#c83c3c; --orange:#e56b25; --purple:#7447d6;
+    --gray:#7d8792; --shadow:0 10px 28px rgba(28,48,77,.08); --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  button,input{font:inherit}
+  header{background:#0e1c2f;color:white;padding:18px 24px 16px;box-shadow:0 4px 18px rgba(10,24,46,.18)}
+  .head{max-width:1500px;margin:auto;display:flex;justify-content:space-between;gap:22px;align-items:flex-start}
+  .modebar{max-width:1500px;margin:12px auto 0;padding:0 18px;display:flex;gap:6px}
+  .viewTabs{display:inline-flex;background:#e8edf5;border:1px solid #d9e1ec;border-radius:10px;padding:3px;gap:3px}
+  .viewTab{border:0;background:transparent;color:#44546c;padding:8px 13px;border-radius:7px;font-weight:750;font-size:12px;cursor:pointer}
+  .viewTab.active{background:#fff;color:#10233f;box-shadow:0 1px 5px rgba(25,44,72,.12)}
+  h1{font-size:25px;margin:0 0 5px;line-height:1.12;letter-spacing:-.02em}
+  .sub{font-size:13.5px;color:#bdc9da;max-width:920px;line-height:1.45}
+  main{max-width:1500px;margin:14px auto 24px;padding:0 18px;display:grid;grid-template-columns:310px minmax(0,1fr);gap:14px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .controls{padding:15px;align-self:start;position:sticky;top:12px}
+  .controls h2,.section h2{font-size:15px;margin:0 0 10px}
+  .ctrl{padding:11px 0;border-top:1px solid #edf1f5}.ctrl:first-of-type{border-top:0}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
+  label{font-size:12.5px;font-weight:760;color:#2a3b55}
+  .val{font-size:12.5px;font-weight:800;color:#0c5fc8;background:#edf5ff;padding:3px 7px;border-radius:7px;min-width:78px;text-align:center}
+  input[type=range]{width:100%;accent-color:var(--blue)}
+  .ends{display:flex;justify-content:space-between;font-size:10px;color:#91a0b3;margin-top:2px}
+  .hint{font-size:10.8px;color:var(--muted);line-height:1.42;margin-top:5px}
+  .checkrow{display:flex;gap:8px;align-items:center;font-size:11.5px;color:#52647a;margin-top:8px}
+  button{border:1px solid #ccd7e4;background:white;color:#30445f;padding:8px 10px;border-radius:9px;font-size:12px;font-weight:750;cursor:pointer}
+  button:hover{background:#f7faff;border-color:#9cb2cf}
+  .metricGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .metric{padding:10px;border-radius:11px;background:#f1f6fd;border:1px solid #d6e4f7}
+  .metric .k{font-size:9.5px;color:#687b93}.metric .v{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:20px;font-weight:700;color:#174e93;line-height:1.35;margin:2px 0 1px}
+  .workspace{min-width:0;display:flex;flex-direction:column;gap:14px}
+  .stereoGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .card{overflow:hidden;min-width:0}
+  .cardhead{padding:12px 14px;border-bottom:1px solid #e6ecf3;display:flex;justify-content:space-between;gap:10px;align-items:center}
+  .cardhead h3{font-size:14px;margin:0}.cardhead span{font-size:10.5px;color:#718198}
+  .canvas{height:420px;background:#f9fbfe}
+  .sceneCanvas{height:520px;background:#f9fbfe}
+  svg{width:100%;height:100%;display:block}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;padding:9px 12px;border-top:1px solid #e7edf4;background:#fbfcfe;font-size:10.5px;color:#5e6e83}
+  .legend i{display:inline-block;width:13px;height:3px;border-radius:3px;vertical-align:middle;margin-right:5px}
+  .section{padding:14px 16px}
+  .equationRow{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .eqCard{border:1px solid #e1e8f1;border-radius:11px;padding:11px 12px;background:#fcfdff}
+  .eqCard h4{font-size:11.5px;margin:0 0 6px;color:#33465f}
+  .math{color:#1a2c45;overflow-x:auto;overflow-y:hidden;padding:6px 0 5px}.math math{font-family:"Cambria Math","STIX Two Math","Latin Modern Math","Times New Roman",serif;font-size:19px !important;color:#1a2c45;display:block;width:max-content;max-width:none;margin:.10em auto .14em;line-height:1.32;math-style:normal}.math mtable{white-space:nowrap}.eqCard .math mtable{margin-inline:auto}.eqCard .explain{margin-top:5px}.step .math{padding:4px 0 3px}.step .math math{margin:.06em auto .08em}.math mtd{padding:.06em .20em}.math mi,.math mn,.math mo,.math mtext{font-size:1em}.math mtext{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-style:normal}.math mfrac>mrow,.math mfrac>mi,.math mfrac>mn,.math mfrac>mtext,.math mfrac>msub,.math mfrac>msup,.math mfrac>mfrac,.math mfrac>mstyle{math-depth:0;font-size:1em}.metric sub{font-size:.72em;vertical-align:sub}.eqline{display:block}.derivationSection{display:none}main.deriveView{grid-template-columns:1fr}main.deriveView .controls{display:none}main.deriveView .workspace> :not(.derivationSection){display:none}main.deriveView .derivationSection{display:block}.derivationSection .math math{font-size:19px !important}
+  .explain{font-size:10.8px;line-height:1.45;color:#68798e}
+  .propertyGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  .prop{border:1px solid #e1e8f1;border-radius:10px;padding:10px;background:#fcfdff}
+  .prop b{display:block;font-size:11.5px;margin-bottom:4px;color:#2b3e58}.prop span{font-size:10.6px;line-height:1.42;color:#68798e}
+  .derivation{display:grid;grid-template-columns:minmax(320px,.95fr) 1.05fr;gap:14px;align-items:center}
+  .steps{display:flex;flex-direction:column;gap:8px}
+  .step{padding:9px 11px;border:1px solid #e1e8f1;border-radius:10px;background:#fff}
+  .step p{margin:3px 0 0;font-size:10.6px;line-height:1.42;color:#68798e}
+  @media(max-width:1100px){main{grid-template-columns:1fr}.controls{position:static}.stereoGrid{grid-template-columns:1fr}.canvas{height:460px}.equationRow{grid-template-columns:1fr}.propertyGrid{grid-template-columns:1fr 1fr}.derivation{grid-template-columns:1fr}.sceneCanvas{height:480px}}
+  @media(max-width:650px){header{padding:15px 14px}.head{flex-direction:column}main{padding:0 10px}.canvas{height:380px}.sceneCanvas{height:410px}.propertyGrid{grid-template-columns:1fr}.metricGrid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="head">
+    <div>
+      <h1>Stereo Vision and Parallax in Aerial Photogrammetry</h1>
+      <div class="sub">Two overlapping vertical aerial photographs observe the same ground point from different camera positions. The horizontal image shift — x-parallax — carries depth information and is the foundation of stereoscopic height measurement.</div>
+    </div>
+  </div>
+</header>
+
+<div class="modebar">
+  <div class="viewTabs" role="tablist" aria-label="Page view">
+    <button class="viewTab active" type="button" role="tab" aria-selected="true" data-view="demo">Interactive demo</button>
+    <button class="viewTab" type="button" role="tab" aria-selected="false" data-view="derive">Derivation</button>
+  </div>
+</div>
+
+<main id="appMain">
+  <aside class="panel controls">
+    <h2>Stereo geometry controls</h2>
+    <div class="ctrl">
+      <div class="row"><label for="h">Point elevation, h</label><span class="val" id="hVal">200 m</span></div>
+      <input id="h" type="range" min="0" max="700" step="10" value="200" />
+      <div class="ends"><span>0 m</span><span>700 m</span></div>
+      <div class="hint">Elevation above the reference datum. Higher points are closer to the cameras and therefore have larger parallax.</div>
+    </div>
+    <div class="ctrl">
+      <div class="row"><label for="H">Flight height, H</label><span class="val" id="HVal">1800 m</span></div>
+      <input id="H" type="range" min="900" max="5000" step="100" value="1800" />
+      <div class="ends"><span>900 m</span><span>5000 m</span></div>
+      <div class="hint">Camera height above the same reference datum.</div>
+    </div>
+    <div class="ctrl">
+      <div class="row"><label for="B">Air base, B</label><span class="val" id="BVal">450 m</span></div>
+      <input id="B" type="range" min="100" max="900" step="25" value="450" />
+      <div class="ends"><span>100 m</span><span>900 m</span></div>
+      <div class="hint">Distance between the two exposure stations along the flight line.</div>
+    </div>
+    <div class="ctrl">
+      <div class="row"><label for="f">Focal length, f</label><span class="val" id="fVal">152 mm</span></div>
+      <input id="f" type="range" min="80" max="210" step="1" value="152" />
+      <div class="ends"><span>80 mm</span><span>210 mm</span></div>
+      <div class="hint">Longer focal length magnifies image coordinates and parallax in millimeters.</div>
+    </div>
+    <div class="ctrl">
+      <div class="row"><label for="X">Ground position, X</label><span class="val" id="XVal">150 m</span></div>
+      <input id="X" type="range" min="-500" max="500" step="10" value="150" />
+      <div class="ends"><span>−500 m</span><span>+500 m</span></div>
+      <div class="hint">Moves the selected point along the flight direction. Notice: p stays the same for a fixed h, B, H, and f.</div>
+    </div>
+    <div class="ctrl">
+      <div class="row"><label for="Y">y-shift / cross-track position, Y</label><span class="val" id="YVal">180 m</span></div>
+      <input id="Y" type="range" min="-420" max="420" step="10" value="180" />
+      <div class="ends"><span>−420 m</span><span>+420 m</span></div>
+      <div class="hint">Moves the vertical object up or down in both photographs. In ideal vertical stereo, changing Y changes image y-position but does <b>not</b> create y-parallax.</div>
+    </div>
+    <div class="ctrl">
+      <label>Display options</label>
+      <label class="checkrow"><input id="showRays" type="checkbox" checked /> show 3D camera rays</label>
+      <label class="checkrow"><input id="showRef" type="checkbox" checked /> show datum reference point</label>
+    </div>
+    <div class="metricGrid">
+      <div class="metric"><div class="k">LEFT TOP IMAGE x<sub>L,t</sub></div><div class="v" id="xLVal">35.63 mm</div></div>
+      <div class="metric"><div class="k">RIGHT TOP IMAGE x<sub>R,t</sub></div><div class="v" id="xRVal">−7.13 mm</div></div>
+      <div class="metric"><div class="k">TOP ABSOLUTE PARALLAX P<sub>t</sub></div><div class="v" id="pVal">42.75 mm</div></div>
+      <div class="metric"><div class="k">LEFT BOTTOM IMAGE x<sub>L,b</sub></div><div class="v" id="xLbVal">31.67 mm</div></div>
+      <div class="metric"><div class="k">RIGHT BOTTOM IMAGE x<sub>R,b</sub></div><div class="v" id="xRbVal">−6.33 mm</div></div>
+      <div class="metric"><div class="k">BOTTOM / BASE ABSOLUTE PARALLAX P<sub>b</sub></div><div class="v" id="p0Val">38.00 mm</div></div>
+      <div class="metric"><div class="k">DIFFERENTIAL PARALLAX dP</div><div class="v" id="dpVal">4.75 mm</div></div>
+      <div class="metric"><div class="k">HEIGHT ESTIMATE h</div><div class="v" id="ratioVal">200.0 m</div></div>
+    </div>
+    <div style="margin-top:12px"><button id="resetBtn" type="button">Reset demo</button></div>
+  </aside>
+
+  <section class="workspace">
+    <div class="stereoGrid">
+      <article class="panel card">
+        <div class="cardhead"><h3>Left photograph</h3><span>Exposure station C<sub>L</sub></span></div>
+        <div class="canvas"><svg id="leftSvg" viewBox="0 0 720 440" aria-label="Left aerial photograph of a stereo pair"></svg></div>
+        <div class="legend"><span><i style="background:#c83c3c"></i>top image</span><span><i style="background:#17845d"></i>base / datum image</span><span><i style="background:#7d8792"></i>vertical object image</span><span><i style="background:#1769e0"></i>x coordinate from PP</span></div>
+      </article>
+      <article class="panel card">
+        <div class="cardhead"><h3>Right photograph</h3><span>Exposure station C<sub>R</sub></span></div>
+        <div class="canvas"><svg id="rightSvg" viewBox="0 0 720 440" aria-label="Right aerial photograph of a stereo pair"></svg></div>
+        <div class="legend"><span><i style="background:#c83c3c"></i>top image</span><span><i style="background:#17845d"></i>base / datum image</span><span><i style="background:#7447d6"></i>epipolar line</span><span><i style="background:#7d8792"></i>vertical-object image</span></div>
+      </article>
+    </div>
+
+    <article class="panel card">
+      <div class="cardhead"><h3>3D stereo geometry</h3><span>two camera centers · one object point · intersecting rays</span></div>
+      <div class="sceneCanvas"><svg id="sceneSvg" viewBox="0 0 1120 540" aria-label="3D stereo photogrammetry geometry"></svg></div>
+      <div class="legend"><span><i style="background:#1769e0"></i>air base B</span><span><i style="background:#7447d6"></i>rays to selected point</span><span><i style="background:#c83c3c"></i>elevation h</span><span><i style="background:#526b84"></i>flight height H</span></div>
+    </article>
+
+    <article class="panel section">
+      <h2>What the stereo pair is saying</h2>
+      <div class="equationRow">
+        <div class="eqCard"><h4>Left image coordinate</h4><div class="math" id="leftEq"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="right left" rowspacing=".30em" columnspacing=".42em"><mtr><mtd columnalign="right"><msub><mi>x</mi><mrow><mi>L</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd columnalign="left"><mo>=</mo><mfrac><mrow><mi>f</mi><mo>(</mo><mi>X</mi><mo>+</mo><mfrac><mrow><mi>B</mi></mrow><mrow><mn>2</mn></mrow></mfrac><mo>)</mo></mrow><mrow><mi>H</mi><mo>−</mo><mi>h</mi></mrow></mfrac></mtd></mtr></mtable></mstyle></math></div><div class="explain">The left camera sees the top of the vertical object relative to its own exposure station.</div></div>
+        <div class="eqCard"><h4>Right image coordinate</h4><div class="math" id="rightEq"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="right left" rowspacing=".30em" columnspacing=".42em"><mtr><mtd columnalign="right"><msub><mi>x</mi><mrow><mi>R</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd columnalign="left"><mo>=</mo><mfrac><mrow><mi>f</mi><mo>(</mo><mi>X</mi><mo>−</mo><mfrac><mrow><mi>B</mi></mrow><mrow><mn>2</mn></mrow></mfrac><mo>)</mo></mrow><mrow><mi>H</mi><mo>−</mo><mi>h</mi></mrow></mfrac></mtd></mtr></mtable></mstyle></math></div><div class="explain">The right camera sees the same top point shifted along the epipolar direction.</div></div>
+        <div class="eqCard"><h4>Top and bottom absolute parallax</h4><div class="math" id="parallaxEq"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="right left" rowspacing=".30em" columnspacing=".42em"><mtr><mtd columnalign="right"><msub><mi>P</mi><mi>t</mi></msub></mtd><mtd columnalign="left"><mo>=</mo><msub><mi>x</mi><mrow><mi>L</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>R</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="right"><msub><mi>P</mi><mi>b</mi></msub></mtd><mtd columnalign="left"><mo>=</mo><msub><mi>x</mi><mrow><mi>L</mi><mo>,</mo><mi>b</mi></mrow></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>R</mi><mo>,</mo><mi>b</mi></mrow></msub></mtd></mtr></mtable></mstyle></math></div><div class="explain">You need both absolute parallaxes: one for the <b>top</b> of the vertical object and one for the <b>bottom/base point</b>. In this page, the symbol <b>P<sub>b</sub></b> means the base-point absolute parallax.</div></div>
+        <div class="eqCard"><h4>Differential parallax</h4><div class="math" id="diffEq"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="right left" rowspacing=".30em" columnspacing=".42em"><mtr><mtd columnalign="right"><mrow><mi>d</mi><mi>P</mi></mrow></mtd><mtd columnalign="left"><mo>=</mo><msub><mi>P</mi><mi>t</mi></msub><mo>−</mo><msub><mi>P</mi><mi>b</mi></msub></mtd></mtr></mtable></mstyle></math></div><div class="explain">This is the standard photogrammetric definition for a vertical object: <b>dP</b> is the difference between the top absolute parallax and the bottom absolute parallax.</div></div>
+        <div class="eqCard"><h4>Height from parallax differences</h4><div class="math" id="heightEq"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="right left" rowspacing=".30em" columnspacing=".42em"><mtr><mtd columnalign="right"><mi>h</mi></mtd><mtd columnalign="left"><mo>=</mo><mfrac><mrow><mi>H</mi><mo>·</mo><mi>d</mi><mi>P</mi></mrow><mrow><msub><mi>P</mi><mi>b</mi></msub><mo>+</mo><mi>d</mi><mi>P</mi></mrow></mfrac></mtd></mtr></mtable></mstyle></math></div><div class="explain">Because the top absolute parallax equals <b>P<sub>b</sub> + dP = P<sub>t</sub></b>, the object height can be estimated directly from the flight height <b>H</b>, the base-point parallax <b>P<sub>b</sub></b>, and the differential parallax <b>dP</b>.</div></div>
+      </div>
+    </article>
+
+    <article class="panel section">
+      <h2>Parallax properties</h2>
+      <div class="propertyGrid">
+        <div class="prop"><b>1. Higher point → larger p</b><span>As h increases, H−h becomes smaller, so the same point shifts farther apart in the two photographs.</span></div>
+        <div class="prop"><b>2. Larger air base → larger p</b><span>A wider camera separation increases the stereo viewing angle and strengthens depth sensitivity.</span></div>
+        <div class="prop"><b>3. Higher flight → smaller p</b><span>At greater H, the scene is farther away and the parallax signal becomes smaller.</span></div>
+        <div class="prop"><b>4. y-shift changes location, not parallax</b><span>Moving the object in Y shifts it up or down in both photos. In ideal vertical stereo it does not create y-parallax and it does not change x-parallax.</span></div>
+        <div class="prop"><b>5. Differential parallax</b><span>Compare the absolute parallax of the object top with the absolute parallax of its bottom/base point. Their difference provides the stereo height signal used in the height-estimation equation.</span></div>
+      </div>
+    </article>
+
+    <article class="panel section derivationSection">
+      <h2>Detailed derivation</h2>
+      <div class="derivation">
+        <svg id="deriveSvg" viewBox="0 0 620 390" style="min-height:330px" aria-label="Derivation of stereo parallax equation"></svg>
+        <div class="steps">
+          <div class="step"><div class="math"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="center" rowspacing=".18em" columnspacing=".34em"><mtr><mtd><mfrac><msub><mi>x</mi><mrow><mi>L</mi><mo>,</mo><mi>t</mi></mrow></msub><mi>f</mi></mfrac><mo>=</mo><mfrac><mrow><mi>X</mi><mo>+</mo><mfrac><mi>B</mi><mn>2</mn></mfrac></mrow><mrow><mi>H</mi><mo>−</mo><mi>h</mi></mrow></mfrac></mtd></mtr></mtable></mstyle></math></div><p>Use similar triangles from the left exposure station to the <b>top</b> of the vertical object.</p></div>
+          <div class="step"><div class="math"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="center" rowspacing=".18em" columnspacing=".34em"><mtr><mtd><mfrac><msub><mi>x</mi><mrow><mi>R</mi><mo>,</mo><mi>t</mi></mrow></msub><mi>f</mi></mfrac><mo>=</mo><mfrac><mrow><mi>X</mi><mo>−</mo><mfrac><mi>B</mi><mn>2</mn></mfrac></mrow><mrow><mi>H</mi><mo>−</mo><mi>h</mi></mrow></mfrac></mtd></mtr></mtable></mstyle></math></div><p>Use the same geometry from the right exposure station.</p></div>
+          <div class="step"><div class="math"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="center" rowspacing=".18em" columnspacing=".34em"><mtr><mtd><msub><mi>y</mi><mrow><mi>L</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>=</mo><msub><mi>y</mi><mrow><mi>R</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>=</mo><mfrac><mrow><mi>f</mi><mi>Y</mi></mrow><mrow><mi>H</mi><mo>−</mo><mi>h</mi></mrow></mfrac></mtd></mtr></mtable></mstyle></math></div><p>The y-shift control moves the object in cross-track direction. In ideal vertical stereo, both photos keep the same y coordinate, so ideal y-parallax is zero.</p></div>
+          <div class="step"><div class="math"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="center" rowspacing=".18em" columnspacing=".34em"><mtr><mtd><msub><mi>P</mi><mi>t</mi></msub><mo>=</mo><msub><mi>x</mi><mrow><mi>L</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>R</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>=</mo><mfrac><mrow><mi>f</mi><mi>B</mi></mrow><mrow><mi>H</mi><mo>−</mo><mi>h</mi></mrow></mfrac></mtd></mtr></mtable></mstyle></math></div><p>Subtract the two top-point x-coordinate equations. The X terms cancel, leaving the top absolute parallax.</p></div>
+          <div class="step"><div class="math"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="center" rowspacing=".18em" columnspacing=".34em"><mtr><mtd><msub><mi>P</mi><mi>b</mi></msub><mo>=</mo><mfrac><mrow><mi>f</mi><mi>B</mi></mrow><mi>H</mi></mfrac></mtd></mtr></mtable></mstyle></math></div><p>For the bottom/base point, the elevation is zero relative to the reference datum, so its absolute parallax is <b>P<sub>b</sub></b>.</p></div>
+          <div class="step"><div class="math"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="center" rowspacing=".18em" columnspacing=".34em"><mtr><mtd><mrow><mi>d</mi><mi>P</mi></mrow><mo>=</mo><msub><mi>P</mi><mi>t</mi></msub><mo>−</mo><msub><mi>P</mi><mi>b</mi></msub></mtd></mtr></mtable></mstyle></math></div><p>This is the <b>differential parallax</b>: the difference between the absolute parallax of the top and the absolute parallax of the bottom.</p></div>
+          <div class="step"><div class="math"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="center" rowspacing=".18em" columnspacing=".34em"><mtr><mtd><msub><mi>P</mi><mi>t</mi></msub><mo>=</mo><msub><mi>P</mi><mi>b</mi></msub><mo>+</mo><mi>d</mi><mi>P</mi></mtd></mtr></mtable></mstyle></math></div><p>Once differential parallax is measured, the top-point absolute parallax can be written as the base-point parallax plus the parallax difference.</p></div>
+          <div class="step"><div class="math"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="center" rowspacing=".18em" columnspacing=".34em"><mtr><mtd><mi>h</mi><mo>=</mo><mfrac><mrow><mi>H</mi><mo>·</mo><mi>d</mi><mi>P</mi></mrow><msub><mi>P</mi><mi>t</mi></msub></mfrac></mtd></mtr></mtable></mstyle></math></div><p>From the ideal stereo relationship, height is proportional to the ratio between differential parallax and top absolute parallax.</p></div>
+          <div class="step"><div class="math"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="center" rowspacing=".18em" columnspacing=".34em"><mtr><mtd><mi>h</mi><mo>=</mo><mfrac><mrow><mi>H</mi><mo>·</mo><mi>d</mi><mi>P</mi></mrow><mrow><msub><mi>P</mi><mi>b</mi></msub><mo>+</mo><mi>d</mi><mi>P</mi></mrow></mfrac></mtd></mtr></mtable></mstyle></math></div><p>Substitute the top-parallax relation from the previous step. This gives the practical height-estimation formula.</p></div>
+          <div class="step"><div class="math"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="center" rowspacing=".18em" columnspacing=".34em"><mtr><mtd><mfrac><mi>h</mi><mi>H</mi></mfrac><mo>=</mo><mfrac><mrow><mi>d</mi><mi>P</mi></mrow><mrow><msub><mi>P</mi><mi>b</mi></msub><mo>+</mo><mi>d</mi><mi>P</mi></mrow></mfrac></mtd></mtr></mtable></mstyle></math></div><p>This ratio form is useful for interpretation. It says height depends on how large the parallax difference is compared with the total top-point parallax.</p></div>
+        </div>
+      </div>
+    </article>
+  </section>
+</main>
+
+<script>
+(() => {
+  const state={h:200,H:1800,B:450,f:152,X:150,Y:180,showRays:true,showRef:true};
+  const $=s=>document.querySelector(s);
+  const els={h:$('#h'),H:$('#H'),B:$('#B'),f:$('#f'),X:$('#X'),Y:$('#Y')};
+  const appMain=$('#appMain');
+  document.querySelectorAll('.viewTab').forEach(btn=>btn.addEventListener('click',()=>{
+    const derive=btn.dataset.view==='derive';
+    appMain.classList.toggle('deriveView',derive);
+    document.querySelectorAll('.viewTab').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-selected',b===btn?'true':'false');});
+  }));
+  function fmt(v,n=2){return Number(v).toFixed(n)}
+  function enforce(){
+    const maxH=Math.max(0,Math.floor(state.H*0.68/10)*10);
+    if(state.h>maxH){state.h=maxH;els.h.value=state.h;}
+  }
+  Object.entries(els).forEach(([k,el])=>el.addEventListener('input',()=>{state[k]=+el.value;enforce();render();}));
+  $('#showRays').addEventListener('change',e=>{state.showRays=e.target.checked;render();});
+  $('#showRef').addEventListener('change',e=>{state.showRef=e.target.checked;render();});
+  $('#resetBtn').addEventListener('click',()=>{
+    Object.assign(state,{h:200,H:1800,B:450,f:152,X:150,Y:180,showRays:true,showRef:true});
+    Object.entries(els).forEach(([k,el])=>el.value=state[k]);
+    $('#showRays').checked=true;$('#showRef').checked=true;render();
+  });
+
+  function calc(h=state.h){
+    const denom=state.H-h;
+    const xL=state.f*(state.X+state.B/2)/denom;
+    const xR=state.f*(state.X-state.B/2)/denom;
+    const y=state.f*state.Y/denom;
+    const p=xL-xR;
+    return {xL,xR,y,p,denom};
+  }
+
+  function photoBackground(cx,cy){
+    const pieces=[];
+    pieces.push(`<rect x="55" y="35" width="610" height="360" rx="10" fill="#edf3e8" stroke="#aebdca" stroke-width="2"/>`);
+    for(let i=0;i<7;i++) pieces.push(`<line x1="80" y1="${75+i*50}" x2="640" y2="${75+i*50}" stroke="#d9e4d4" stroke-width="1"/>`);
+    for(let i=0;i<9;i++) pieces.push(`<line x1="${90+i*65}" y1="55" x2="${90+i*65}" y2="375" stroke="#d9e4d4" stroke-width="1"/>`);
+    pieces.push(`<path d="M80 330 C210 285 330 310 430 245 S590 180 645 205" fill="none" stroke="#e8ddba" stroke-width="24"/>`);
+    pieces.push(`<path d="M80 330 C210 285 330 310 430 245 S590 180 645 205" fill="none" stroke="#d2c496" stroke-width="2"/>`);
+    for(let i=0;i<18;i++){const x=100+(i%6)*90+(i%2)*12,y=80+Math.floor(i/6)*92;pieces.push(`<rect x="${x}" y="${y}" width="32" height="22" rx="2" fill="#c4cfc1" opacity=".85"/>`)}
+    pieces.push(`<line x1="${cx-13}" y1="${cy}" x2="${cx+13}" y2="${cy}" stroke="#243a55" stroke-width="2"/><line x1="${cx}" y1="${cy-13}" x2="${cx}" y2="${cy+13}" stroke="#243a55" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="4" fill="#fff" stroke="#243a55" stroke-width="2"/><text x="${cx+13}" y="${cy+18}" font-size="12" font-weight="800" fill="#243a55">PP</text>`);
+    return pieces.join('');
+  }
+
+  function drawPhoto(svgId,side,ctop,cbase){
+    const svg=$(svgId),cx=360,cy=215,scale=2.1;
+    const xt=side==='L'?ctop.xL:ctop.xR;
+    const xb=side==='L'?cbase.xL:cbase.xR;
+    const yt=ctop.y, yb=cbase.y;
+    const pxt=cx+xt*scale, pyt=cy-yt*scale;
+    const pxb=cx+xb*scale, pyb=cy-yb*scale;
+    const coordColor=side==='L'?'#1769e0':'#7447d6';
+    const axisLabel=side==='L'?'xL':'xR';
+    const camLabel=side==='L'?'Cₗ':'Cᵣ';
+    const xString = xt>=0?`${axisLabel}ₜ = +${fmt(xt,2)} mm`:`${axisLabel}ₜ = ${fmt(xt,2)} mm`;
+    const xBaseString = xb>=0?`${axisLabel}ᵦ = +${fmt(xb,2)} mm`:`${axisLabel}ᵦ = ${fmt(xb,2)} mm`;
+    svg.innerHTML=`
+      <defs>
+        <marker id="arr-${side}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="${coordColor}"/></marker><marker id="arrg-${side}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#17845d"/></marker>
+      </defs>
+      <rect width="720" height="440" fill="#f9fbfe"/>
+      ${photoBackground(cx,cy)}
+      <line x1="90" y1="${pyt}" x2="640" y2="${pyt}" stroke="#c83c3c" stroke-width="1.8" stroke-dasharray="7 5" opacity=".72"/>
+      <text x="96" y="${pyt-8}" font-size="10" font-weight="700" fill="#c83c3c">top epipolar line</text>
+      ${state.showRef?`<line x1="90" y1="${pyb}" x2="640" y2="${pyb}" stroke="#17845d" stroke-width="1.6" stroke-dasharray="4 4" opacity=".65"/><text x="96" y="${pyb-7}" font-size="9.5" font-weight="700" fill="#17845d">bottom / base epipolar line</text>`:''}
+      <line x1="${pxb}" y1="${pyb}" x2="${pxt}" y2="${pyt}" stroke="#7d8792" stroke-width="8" opacity=".82" stroke-linecap="round"/>
+      <circle cx="${pxb}" cy="${pyb}" r="8.5" fill="#fff" stroke="#17845d" stroke-width="3.8"/>
+      <rect x="${pxt-8}" y="${pyt-8}" width="16" height="16" rx="3" fill="#fff" stroke="#c83c3c" stroke-width="3.8"/>
+      <text x="${pxt+12}" y="${pyt-12}" font-size="11.8" font-weight="800" fill="#b63a3a">top</text>
+      <text x="${pxb+12}" y="${pyb+22}" font-size="11.4" font-weight="700" fill="#17845d">bottom</text>
+      <line x1="${cx}" y1="${cy+145}" x2="${pxt}" y2="${cy+145}" stroke="#c83c3c" stroke-width="2.8" marker-end="url(#arr-${side})"/>
+      <line x1="${cx}" y1="${cy+137}" x2="${cx}" y2="${cy+153}" stroke="#c83c3c"/><line x1="${pxt}" y1="${cy+137}" x2="${pxt}" y2="${cy+153}" stroke="#c83c3c"/>
+      <text x="${Math.min(cx,pxt)+Math.abs(pxt-cx)/2-52}" y="${cy+134}" font-size="12" font-weight="800" fill="#c83c3c">${xString}</text>
+      ${state.showRef?`<line x1="${cx}" y1="${cy+178}" x2="${pxb}" y2="${cy+178}" stroke="#17845d" stroke-width="2.5" marker-end="url(#arrg-${side})" opacity=".9"/><line x1="${cx}" y1="${cy+170}" x2="${cx}" y2="${cy+186}" stroke="#17845d"/><line x1="${pxb}" y1="${cy+170}" x2="${pxb}" y2="${cy+186}" stroke="#17845d"/><text x="${Math.min(cx,pxb)+Math.abs(pxb-cx)/2-55}" y="${cy+197}" font-size="11" font-weight="800" fill="#17845d">${xBaseString}</text>`:''}
+      <g transform="translate(76 50)"><rect width="250" height="68" rx="8" fill="#fff" opacity=".95" stroke="#d1dae5"/><text x="11" y="18" font-size="10" font-weight="800" fill="#435870">${camLabel} VIEW</text><text x="11" y="36" font-size="10.8" fill="#62758c">Top (red) and bottom (green) are the same vertical object</text><text x="11" y="52" font-size="10.8" fill="#62758c">Changing Y moves both together with zero ideal y-parallax</text></g>
+      <g transform="translate(570 382)"><line x1="0" y1="0" x2="70" y2="0" stroke="#51657d" stroke-width="2"/><path d="M70 0L60 -5L60 5Z" fill="#51657d"/><text x="0" y="-9" font-size="10" font-weight="700" fill="#51657d">flight / +x</text></g>
+    `;
+  }
+
+  function drawScene(){
+    const svg=$('#sceneSvg');
+    const W=1120,Hsvg=540;
+    const groundY=432;
+    const centerX=560;
+    const camHeightScale=0.17;
+    const hFrac=(state.H-900)/(5000-900);
+    const camBaseY=110-hFrac*68;
+    const xScale=0.72, ySkewX=0.26, ySkewY=0.17, zScale=0.17;
+    function project(x,y,z=0){
+      return {x:centerX + x*xScale + y*ySkewX, y:groundY - y*ySkewY - z*zScale};
+    }
+    const CL={x:centerX-state.B*xScale/2, y:camBaseY};
+    const CR={x:centerX+state.B*xScale/2, y:camBaseY};
+    const base=project(state.X,state.Y,0);
+    const top=project(state.X,state.Y,state.h);
+    const ref=project(state.X,state.Y,0);
+    const site=[project(-520,-330,0),project(520,-330,0),project(520,330,0),project(-520,330,0)];
+    const grid=[];
+    for(let x=-480;x<=480;x+=120){ const p1=project(x,-330,0), p2=project(x,330,0); grid.push(`<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="#d4dde7" stroke-width="1"/>`); }
+    for(let y=-300;y<=300;y+=120){ const p1=project(-520,y,0), p2=project(520,y,0); grid.push(`<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="#d4dde7" stroke-width="1"/>`); }
+    const rays=state.showRays?`<line x1="${CL.x}" y1="${CL.y}" x2="${top.x}" y2="${top.y}" stroke="#7447d6" stroke-width="2.5"/><line x1="${CR.x}" y1="${CR.y}" x2="${top.x}" y2="${top.y}" stroke="#7447d6" stroke-width="2.5"/>`:'';
+    const refRays=state.showRays&&state.showRef?`<line x1="${CL.x}" y1="${CL.y}" x2="${ref.x}" y2="${ref.y}" stroke="#17845d" stroke-width="1.8" opacity=".72"/><line x1="${CR.x}" y1="${CR.y}" x2="${ref.x}" y2="${ref.y}" stroke="#17845d" stroke-width="1.8" opacity=".72"/>`:'';
+    svg.innerHTML=`
+      <defs><marker id="arrB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#1769e0"/></marker></defs>
+      <rect width="1120" height="540" fill="#f8fbff"/>
+      <polygon points="${site.map(p=>`${p.x},${p.y}`).join(' ')}" fill="#edf3ea" stroke="#c3d0c3"/>
+      ${grid.join('')}
+      ${refRays}${rays}
+      <line x1="${CL.x}" y1="${CL.y}" x2="${CL.x}" y2="${groundY}" stroke="#8a98aa" stroke-dasharray="6 5"/><line x1="${CR.x}" y1="${CR.y}" x2="${CR.x}" y2="${groundY}" stroke="#8a98aa" stroke-dasharray="6 5"/>
+      <line x1="${CL.x}" y1="${CL.y-24}" x2="${CR.x}" y2="${CR.y-24}" stroke="#1769e0" stroke-width="2.5" marker-end="url(#arrB)"/>
+      <line x1="${CL.x}" y1="${CL.y-31}" x2="${CL.x}" y2="${CL.y-17}" stroke="#1769e0"/><line x1="${CR.x}" y1="${CR.y-31}" x2="${CR.x}" y2="${CR.y-17}" stroke="#1769e0"/>
+      <text x="${(CL.x+CR.x)/2-34}" y="${CL.y-34}" font-size="13" font-weight="800" fill="#1769e0">B = ${state.B} m</text>
+      <g transform="translate(${CL.x-28} ${CL.y-18})"><path d="M4 16L28 16L40 12L28 10L20 5L16 5L19 10L11 10L8 7L5 7L6 10L0 12Z" fill="#203b5b"/></g>
+      <g transform="translate(${CR.x-28} ${CR.y-18})"><path d="M4 16L28 16L40 12L28 10L20 5L16 5L19 10L11 10L8 7L5 7L6 10L0 12Z" fill="#203b5b"/></g>
+      <circle cx="${CL.x}" cy="${CL.y}" r="4.5" fill="#203b5b"/><circle cx="${CR.x}" cy="${CR.y}" r="4.5" fill="#203b5b"/>
+      <text x="${CL.x-20}" y="${CL.y+31}" font-size="11" font-weight="800" fill="#203b5b">Cₗ</text><text x="${CR.x-20}" y="${CR.y+31}" font-size="11" font-weight="800" fill="#203b5b">Cᵣ</text>
+      <line x1="${base.x}" y1="${base.y}" x2="${top.x}" y2="${top.y}" stroke="#7d8792" stroke-width="9"/>
+      <circle cx="${base.x}" cy="${base.y}" r="5" fill="#17845d"/><text x="${base.x+10}" y="${base.y+18}" font-size="10.8" font-weight="700" fill="#17845d">base</text>
+      <rect x="${top.x-12}" y="${top.y-6}" width="24" height="12" rx="2" fill="#de6868" stroke="#8f2f2f"/>
+      <text x="${top.x+16}" y="${(top.y+base.y)/2}" font-size="12" font-weight="800" fill="#7d8792">vertical object</text>
+      <circle cx="${top.x}" cy="${top.y}" r="5" fill="#c83c3c"/><text x="${top.x+10}" y="${top.y-10}" font-size="11" font-weight="800" fill="#c83c3c">top P(X,Y,h)</text>
+      <line x1="115" y1="${CL.y}" x2="115" y2="${groundY}" stroke="#526b84" stroke-width="2"/><line x1="108" y1="${CL.y}" x2="122" y2="${CL.y}" stroke="#526b84"/><line x1="108" y1="${groundY}" x2="122" y2="${groundY}" stroke="#526b84"/>
+      <text x="128" y="${(CL.y+groundY)/2}" font-size="12" font-weight="800" fill="#526b84">H = ${state.H} m</text>
+      <text x="${top.x+14}" y="${top.y+18}" font-size="11" font-weight="800" fill="#b52d2d">h = ${state.h} m</text>
+      <g transform="translate(770 92)"><rect width="305" height="102" rx="9" fill="#fff" opacity=".95" stroke="#d1dae5"/><text x="12" y="19" font-size="10" font-weight="800" fill="#435870">STEREO DEPTH CUE</text><text x="12" y="38" font-size="11" fill="#62758c">Top and base of one vertical object are shown in both photos.</text><text x="12" y="55" font-size="11" fill="#62758c">Moving Y places the object anywhere in the stereo model without</text><text x="12" y="72" font-size="11" fill="#62758c">creating ideal y-parallax. Height h increases the absolute</text><text x="12" y="89" font-size="11" fill="#62758c">parallax and changes the difference between top and bottom parallax.</text></g>
+    `;
+  }
+
+  function drawDerivation(){
+    const svg=$('#deriveSvg');
+    const CL={x:105,y:70},CR={x:365,y:70},gY=320,base={x:300,y:320},top={x:300,y:205};
+    svg.innerHTML=`
+      <rect width="620" height="390" fill="#fbfdff"/>
+      <line x1="70" y1="${gY}" x2="555" y2="${gY}" stroke="#778973" stroke-width="2"/>
+      <line x1="${CL.x}" y1="${CL.y}" x2="${top.x}" y2="${top.y}" stroke="#7447d6" stroke-width="2"/>
+      <line x1="${CR.x}" y1="${CR.y}" x2="${top.x}" y2="${top.y}" stroke="#7447d6" stroke-width="2"/>
+      <line x1="${CL.x}" y1="${CL.y}" x2="${base.x}" y2="${base.y}" stroke="#17845d" stroke-width="1.8" opacity=".8"/>
+      <line x1="${CR.x}" y1="${CR.y}" x2="${base.x}" y2="${base.y}" stroke="#17845d" stroke-width="1.8" opacity=".8"/>
+      <line x1="${top.x}" y1="${top.y}" x2="${base.x}" y2="${base.y}" stroke="#7d8792" stroke-width="7"/>
+      <circle cx="${base.x}" cy="${base.y}" r="5" fill="#17845d"/>
+      <circle cx="${CL.x}" cy="${CL.y}" r="5" fill="#203b5b"/><circle cx="${CR.x}" cy="${CR.y}" r="5" fill="#203b5b"/><circle cx="${top.x}" cy="${top.y}" r="5" fill="#c83c3c"/>
+      <line x1="${CL.x}" y1="48" x2="${CR.x}" y2="48" stroke="#1769e0" stroke-width="2.5"/>
+      <text x="225" y="40" font-size="12" font-weight="800" fill="#1769e0">air base B</text>
+      <text x="${CL.x-18}" y="${CL.y-10}" font-size="11" font-weight="800" fill="#203b5b">Cₗ</text><text x="${CR.x-18}" y="${CR.y-10}" font-size="11" font-weight="800" fill="#203b5b">Cᵣ</text>
+      <text x="${top.x+12}" y="${top.y-6}" font-size="11" font-weight="800" fill="#c83c3c">top</text>
+      <text x="${base.x+12}" y="${base.y+4}" font-size="11" font-weight="800" fill="#17845d">base</text>
+      <text x="${top.x+12}" y="${(top.y+gY)/2}" font-size="11" font-weight="800" fill="#7d8792">h</text>
+      <line x1="535" y1="${CL.y}" x2="535" y2="${gY}" stroke="#526b84" stroke-width="2"/><text x="548" y="205" font-size="11" font-weight="800" fill="#526b84">H</text>
+      <text x="82" y="365" font-size="10.5" fill="#6a7a8e">Use the top and bottom absolute parallaxes in the MathML derivation shown at right.</text>
+    `;
+  }
+
+  function render(){
+    enforce();
+    const c=calc(state.h),c0=calc(0),dp=c.p-c0.p,ratio=dp/c.p;
+    const xLb=c0.xL, xRb=c0.xR, P=c0.p, pt=c.p;
+    const hEst = state.H*dp/(P+dp);
+    $('#hVal').textContent=`${state.h} m`;
+    $('#HVal').textContent=`${state.H} m`;
+    $('#BVal').textContent=`${state.B} m`;
+    $('#fVal').textContent=`${state.f} mm`;
+    $('#XVal').textContent=`${state.X} m`;
+    $('#YVal').textContent=`${state.Y} m`;
+    $('#xLVal').textContent=`${fmt(c.xL)} mm`;
+    $('#xRVal').textContent=`${fmt(c.xR)} mm`;
+    $('#pVal').textContent=`${fmt(pt)} mm`;
+    $('#xLbVal').textContent=`${fmt(xLb)} mm`;
+    $('#xRbVal').textContent=`${fmt(xRb)} mm`;
+    $('#p0Val').textContent=`${fmt(P)} mm`;
+    $('#dpVal').textContent=`${fmt(dp)} mm`;
+    $('#ratioVal').textContent=`${fmt(hEst,1)} m`;
+    $('#leftEq').innerHTML=`<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="right left" rowspacing=".30em" columnspacing=".42em">
+      <mtr><mtd><msub><mi>x</mi><mrow><mi>L</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd><mo>=</mo><mfrac><mrow><mi>f</mi><mo>(</mo><mi>X</mi><mo>+</mo><mfrac><mi>B</mi><mn>2</mn></mfrac><mo>)</mo></mrow><mrow><mi>H</mi><mo>−</mo><mi>h</mi></mrow></mfrac></mtd></mtr>
+      <mtr><mtd></mtd><mtd><mo>=</mo><mfrac><mrow><mo>(</mo><mn>${state.f}</mn><mspace width=".16em"/><mtext>mm</mtext><mo>)</mo><mo>(</mo><mn>${state.X + state.B/2}</mn><mspace width=".16em"/><mtext>m</mtext><mo>)</mo></mrow><mrow><mn>${state.H-state.h}</mn><mspace width=".16em"/><mtext>m</mtext></mrow></mfrac></mtd></mtr>
+      <mtr><mtd></mtd><mtd><mo>=</mo><mn>${fmt(c.xL)}</mn><mspace width=".16em"/><mtext>mm</mtext></mtd></mtr>
+    </mtable></mstyle></math>`;
+    $('#rightEq').innerHTML=`<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="right left" rowspacing=".30em" columnspacing=".42em">
+      <mtr><mtd><msub><mi>x</mi><mrow><mi>R</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd><mo>=</mo><mfrac><mrow><mi>f</mi><mo>(</mo><mi>X</mi><mo>−</mo><mfrac><mi>B</mi><mn>2</mn></mfrac><mo>)</mo></mrow><mrow><mi>H</mi><mo>−</mo><mi>h</mi></mrow></mfrac></mtd></mtr>
+      <mtr><mtd></mtd><mtd><mo>=</mo><mfrac><mrow><mo>(</mo><mn>${state.f}</mn><mspace width=".16em"/><mtext>mm</mtext><mo>)</mo><mo>(</mo><mn>${state.X - state.B/2}</mn><mspace width=".16em"/><mtext>m</mtext><mo>)</mo></mrow><mrow><mn>${state.H-state.h}</mn><mspace width=".16em"/><mtext>m</mtext></mrow></mfrac></mtd></mtr>
+      <mtr><mtd></mtd><mtd><mo>=</mo><mn>${fmt(c.xR)}</mn><mspace width=".16em"/><mtext>mm</mtext></mtd></mtr>
+    </mtable></mstyle></math>`;
+    $('#parallaxEq').innerHTML=`<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="right left" rowspacing=".30em" columnspacing=".42em">
+      <mtr><mtd><msub><mi>P</mi><mi>t</mi></msub></mtd><mtd><mo>=</mo><msub><mi>x</mi><mrow><mi>L</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>R</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>=</mo><mn>${fmt(pt)}</mn><mspace width=".16em"/><mtext>mm</mtext></mtd></mtr>
+      <mtr><mtd><msub><mi>P</mi><mi>b</mi></msub></mtd><mtd><mo>=</mo><msub><mi>x</mi><mrow><mi>L</mi><mo>,</mo><mi>b</mi></mrow></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>R</mi><mo>,</mo><mi>b</mi></mrow></msub><mo>=</mo><mn>${fmt(P)}</mn><mspace width=".16em"/><mtext>mm</mtext></mtd></mtr>
+    </mtable></mstyle></math>`;
+    $('#diffEq').innerHTML=`<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="right left" rowspacing=".30em" columnspacing=".42em">
+      <mtr><mtd><mrow><mi>d</mi><mi>P</mi></mrow></mtd><mtd><mo>=</mo><msub><mi>P</mi><mi>t</mi></msub><mo>−</mo><msub><mi>P</mi><mi>b</mi></msub></mtd></mtr>
+      <mtr><mtd></mtd><mtd><mo>=</mo><mn>${fmt(pt)}</mn><mspace width=".16em"/><mtext>mm</mtext><mo>−</mo><mn>${fmt(P)}</mn><mspace width=".16em"/><mtext>mm</mtext></mtd></mtr>
+      <mtr><mtd></mtd><mtd><mo>=</mo><mn>${fmt(dp)}</mn><mspace width=".16em"/><mtext>mm</mtext></mtd></mtr>
+    </mtable></mstyle></math>`;
+    $('#heightEq').innerHTML=`<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mstyle displaystyle="true" scriptlevel="0"><mtable columnalign="right left" rowspacing=".30em" columnspacing=".42em">
+      <mtr><mtd><mi>h</mi></mtd><mtd><mo>=</mo><mfrac><mrow><mi>H</mi><mo>·</mo><mi>d</mi><mi>P</mi></mrow><mrow><msub><mi>P</mi><mi>b</mi></msub><mo>+</mo><mi>d</mi><mi>P</mi></mrow></mfrac></mtd></mtr>
+      <mtr><mtd></mtd><mtd><mo>=</mo><mfrac><mrow><mo>(</mo><mn>${state.H}</mn><mspace width=".16em"/><mtext>m</mtext><mo>)</mo><mo>(</mo><mn>${fmt(dp,2)}</mn><mspace width=".16em"/><mtext>mm</mtext><mo>)</mo></mrow><mrow><mn>${fmt(P,2)}</mn><mspace width=".16em"/><mtext>mm</mtext><mo>+</mo><mn>${fmt(dp,2)}</mn><mspace width=".16em"/><mtext>mm</mtext></mrow></mfrac></mtd></mtr>
+      <mtr><mtd></mtd><mtd><mo>=</mo><mn>${fmt(hEst,1)}</mn><mspace width=".16em"/><mtext>m</mtext></mtd></mtr>
+    </mtable></mstyle></math>`;
+    drawPhoto('#leftSvg','L',c,c0);
+    drawPhoto('#rightSvg','R',c,c0);
+    drawScene();
+    drawDerivation();
+  }
+  render();
+})();
+</script>
+</body>
+</html>

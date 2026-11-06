@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spherical Triangle — Non-Euclidean Geometry on the Earth</title>
+<style>
+  :root{
+    --bg:#f3f6fa; --panel:#fff; --ink:#132238; --muted:#66778e; --line:#dbe3ed;
+    --blue:#1769e0; --red:#d23b3b; --green:#17845d; --orange:#e56b25; --purple:#7447d6;
+    --shadow:0 10px 28px rgba(28,48,77,.08); --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  header{background:#0e1c2f;color:#fff;padding:18px 24px 16px}
+  .head{max-width:1400px;margin:auto;display:flex;justify-content:space-between;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  h1{font-size:25px;margin:0 0 5px;letter-spacing:-.02em;line-height:1.12}
+  .sub{font-size:13.5px;color:#bdc9da;max-width:860px;line-height:1.45}
+  .formula{background:#172a46;border:1px solid #2d4566;border-radius:12px;padding:9px 14px;white-space:nowrap}
+  .formula b{font:700 24px Georgia,"Times New Roman",serif}
+  .formula span{display:block;font-size:10.5px;color:#aebfd5;margin-top:2px}
+  main{max-width:1400px;margin:14px auto 24px;padding:0 18px;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);gap:14px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .stage{overflow:hidden}
+  .cardhead{padding:12px 14px;border-bottom:1px solid #e6ecf3;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+  .cardhead h3{font-size:14px;margin:0}.cardhead span{font-size:11px;color:#718198}
+  .canvasWrap{height:560px;background:radial-gradient(circle at 50% 45%,#16304f 0%,#0b1a2c 70%);position:relative}
+  canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+  canvas:active{cursor:grabbing}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;padding:9px 12px;border-top:1px solid #e7edf4;background:#fbfcfe;font-size:11px;color:#5e6e83}
+  .legend i{display:inline-block;width:14px;height:3px;border-radius:3px;vertical-align:middle;margin-right:5px}
+  .side{display:flex;flex-direction:column;gap:14px}
+  .card{padding:15px 16px}
+  .card h2{font-size:15px;margin:0 0 10px}
+  .card p{margin:6px 0;font-size:13px;line-height:1.5;color:#3c4d64}
+  label{font-size:12.5px;font-weight:760;color:#2a3b55}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
+  .val{font-size:12.5px;font-weight:800;color:#0c5fc8;background:#edf5ff;padding:3px 7px;border-radius:7px;min-width:60px;text-align:center}
+  input[type=range]{width:100%;accent-color:var(--red)}
+  .ends{display:flex;justify-content:space-between;font-size:10px;color:#91a0b3;margin-top:2px}
+  .angles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .ang{border:1px solid #e1e8f1;border-radius:10px;padding:9px;text-align:center;background:#fcfdff}
+  .ang small{display:block;font-size:10px;color:#6b7c92}
+  .ang strong{font:700 20px Georgia,serif;color:#1a2c45}
+  .sum{margin-top:10px;padding:12px;border-radius:12px;background:#fff3f1;border:1px solid #f5c9c2;text-align:center}
+  .sum .big{font:800 30px Georgia,serif;color:#b52d2d}
+  .sum small{font-size:11px;color:#7a4a44}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .stat{border:1px solid #d6e4f7;background:#f1f6fd;border-radius:10px;padding:9px}
+  .stat small{display:block;font-size:10px;color:#687b93}
+  .stat strong{font-size:15px;color:#174e93}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  button,.btn{border:1px solid #ccd7e4;background:#fff;color:#30445f;padding:8px 11px;border-radius:9px;font:inherit;font-size:12px;font-weight:750;cursor:pointer;text-decoration:none;display:inline-block}
+  button:hover,.btn:hover{background:#f7faff;border-color:#9cb2cf}
+  .callout{border-left:4px solid var(--blue);background:#eef5ff;padding:10px 12px;border-radius:0 10px 10px 0;font-size:12.5px;line-height:1.5;color:#2f4664}
+  .callout.warm{border-left-color:var(--orange);background:#fff6ef;color:#5d4636}
+  .props{max-width:1400px;margin:0 auto 26px;padding:0 18px}
+  .propGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .prop{border:1px solid #e1e8f1;border-radius:10px;padding:11px;background:#fff}
+  .prop b{display:block;font-size:12px;margin-bottom:4px;color:#2b3e58}
+  .prop span{font-size:11.5px;line-height:1.45;color:#68798e}
+  @media(max-width:1000px){main{grid-template-columns:1fr}.canvasWrap{height:460px}.propGrid{grid-template-columns:1fr 1fr}}
+  @media(max-width:600px){.propGrid{grid-template-columns:1fr}.canvasWrap{height:380px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="head">
+    <div>
+      <h1>When Triangles Break the Rules: Geometry on a Sphere</h1>
+      <div class="sub">On a flat plane, a triangle's angles always add to 180°. On the Earth's curved surface they don't. Rotate the globe and widen the triangle to see why aerial photogrammetry relies on <b>local, near-flat</b> geometry — and why map projections are needed at larger extents.</div>
+    </div>
+    <div class="formula"><b>ΣA = 180° + E</b><span>E = spherical excess · Area = E·R²</span></div>
+  </div>
+</header>
+
+<main>
+  <section class="panel stage">
+    <div class="cardhead"><h3>Interactive globe</h3><span>drag to rotate · wheel to zoom · same triangle as the class KML</span></div>
+    <div class="canvasWrap"><canvas id="globe"></canvas></div>
+    <div class="legend"><span><i style="background:#ff5a51"></i>triangle sides (great-circle arcs)</span><span><i style="background:#ffd166"></i>vertex angles</span><span><i style="background:#5fa8e8"></i>graticule (15°)</span></div>
+  </section>
+
+  <aside class="side">
+    <div class="panel card">
+      <h2>Build the triangle</h2>
+      <p>Vertices: <b>A</b> = North Pole, <b>B</b> = (0°, 0°), <b>C</b> = (0°, λ E). Sides AB and AC are meridians; BC lies on the equator.</p>
+      <div class="row"><label for="lam">Longitude of vertex C, λ</label><span class="val" id="lamVal">90°</span></div>
+      <input id="lam" type="range" min="5" max="180" step="1" value="90" />
+      <div class="ends"><span>5°</span><span>180°</span></div>
+      <div class="angles">
+        <div class="ang"><small>∠A (pole)</small><strong id="aA">90°</strong></div>
+        <div class="ang"><small>∠B (equator)</small><strong>90°</strong></div>
+        <div class="ang"><small>∠C (equator)</small><strong>90°</strong></div>
+      </div>
+      <div class="sum"><small>SUM OF INTERIOR ANGLES</small><div class="big" id="sum">270°</div><small id="excess">spherical excess E = 90°</small></div>
+      <div class="stats">
+        <div class="stat"><small>Triangle area (R = 6371 km)</small><strong id="area">63.8 M km²</strong></div>
+        <div class="stat"><small>Share of Earth's surface</small><strong id="frac">1/8 (12.5%)</strong></div>
+      </div>
+      <div class="btns">
+        <button id="b90">Class KML case (λ = 90°)</button>
+        <button id="bReset">Reset view</button>
+        <a class="btn" href="../data/spherical-triangle.kml" download>⬇ KML for Google Earth</a>
+      </div>
+    </div>
+
+    <div class="panel card">
+      <h2>Why this matters for aerial photos</h2>
+      <div class="callout">In the class KML case (λ = 90°) all three corners are <b>right angles</b>, yet the figure is still a triangle. "Straight lines" on a sphere are <b>great circles</b>, and they bend away from Euclidean rules.</div>
+      <p style="margin-top:10px">The excess E grows with the triangle's <b>area</b>. A single aerial photo footprint (a few km) has an excess of a tiny fraction of an arc-second, so the flat-plane similar-triangle geometry used in the next modules is an excellent approximation.</p>
+      <div class="callout warm">Over regions, states, or continents, curvature can no longer be ignored — that is the job of <b>datums and map projections</b>.</div>
+    </div>
+  </aside>
+</main>
+
+<section class="props">
+  <div class="propGrid">
+    <div class="prop"><b>1. Sum &gt; 180°</b><span>Any spherical triangle's angles total more than 180°. The surplus is the spherical excess E.</span></div>
+    <div class="prop"><b>2. Excess ∝ area</b><span>Area = E (in radians) × R². Halve the triangle's area and the excess halves too.</span></div>
+    <div class="prop"><b>3. Small = flat</b><span>Shrink λ toward 0° and watch the sum approach 180° — but note vertex A stays on the pole. Truly small triangles behave Euclidean.</span></div>
+    <div class="prop"><b>4. Field check</b><span>Open the KML in Google Earth, trace the red path, and measure each corner angle with the ruler tool.</span></div>
+  </div>
+</section>
+
+<script>
+(() => {
+  const cv = document.getElementById('globe'), ctx = cv.getContext('2d');
+  const D2R = Math.PI/180, R_KM = 6371;
+  const st = {lam:90, yaw:-45*D2R, pitch:25*D2R, zoom:1};
+  let W=0,H=0,DPR=window.devicePixelRatio||1;
+
+  function resize(){
+    const r=cv.getBoundingClientRect(); W=r.width; H=r.height;
+    cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0); draw();
+  }
+  // lat/lon (deg) -> unit vector; y = north
+  function vec(lat,lon){ const p=lat*D2R,l=lon*D2R; return [Math.cos(p)*Math.sin(l), Math.sin(p), Math.cos(p)*Math.cos(l)]; }
+  function rot(v){
+    let [x,y,z]=v;
+    const cy=Math.cos(st.yaw), sy=Math.sin(st.yaw);
+    let x1=cy*x+sy*z, z1=-sy*x+cy*z;
+    const cp=Math.cos(st.pitch), sp=Math.sin(st.pitch);
+    let y1=cp*y-sp*z1, z2=sp*y+cp*z1;
+    return [x1,y1,z2];
+  }
+  function radius(){ return Math.min(W,H)*0.42*st.zoom; }
+  function proj(v){ const q=rot(v), r=radius(); return {x:W/2+q[0]*r, y:H/2-q[1]*r, front:q[2]>=0, z:q[2]}; }
+  function slerp(a,b,t){
+    const dot=Math.max(-1,Math.min(1,a[0]*b[0]+a[1]*b[1]+a[2]*b[2])), om=Math.acos(dot);
+    if(om<1e-6) return a;
+    const s=Math.sin(om), k1=Math.sin((1-t)*om)/s, k2=Math.sin(t*om)/s;
+    return [a[0]*k1+b[0]*k2, a[1]*k1+b[1]*k2, a[2]*k1+b[2]*k2];
+  }
+  function strokePts(pts,color,width,backAlpha){
+    // draw front segments solid, back segments faint
+    for(const front of [false,true]){
+      ctx.beginPath(); let on=false;
+      for(const v of pts){ const P=proj(v);
+        if(P.front===front){ on?ctx.lineTo(P.x,P.y):ctx.moveTo(P.x,P.y); on=true; } else on=false; }
+      ctx.strokeStyle=color; ctx.lineWidth=front?width:width*0.6;
+      ctx.globalAlpha=front?1:backAlpha; ctx.stroke(); ctx.globalAlpha=1;
+    }
+  }
+  function arc(a,b,n=80){ const pts=[]; for(let i=0;i<=n;i++) pts.push(slerp(a,b,i/n)); return pts; }
+
+  function draw(){
+    if(!W) return;
+    ctx.clearRect(0,0,W,H);
+    const r=radius(), cx=W/2, cy=H/2;
+    // stars
+    ctx.fillStyle='rgba(255,255,255,.35)';
+    for(let i=0;i<70;i++){ ctx.fillRect((i*97%991)/991*W,(i*151%977)/977*H,1,1); }
+    // sphere body
+    const g=ctx.createRadialGradient(cx-r*.35,cy-r*.4,r*.1,cx,cy,r);
+    g.addColorStop(0,'#3f8fd0'); g.addColorStop(.7,'#165590'); g.addColorStop(1,'#0a2f55');
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+    ctx.strokeStyle='rgba(150,210,255,.55)'; ctx.lineWidth=1.5; ctx.stroke();
+    // graticule
+    for(let lat=-75;lat<=75;lat+=15){ const pts=[]; for(let lon=-180;lon<=180;lon+=3) pts.push(vec(lat,lon)); strokePts(pts,lat===0?'rgba(170,220,255,.75)':'rgba(120,180,235,.35)',lat===0?1.6:1,.12); }
+    for(let lon=-180;lon<180;lon+=15){ const pts=[]; for(let lat=-90;lat<=90;lat+=3) pts.push(vec(lat,lon)); strokePts(pts,lon===0?'rgba(170,220,255,.75)':'rgba(120,180,235,.35)',lon===0?1.6:1,.12); }
+
+    const A=vec(90,0), B=vec(0,0), C=vec(0,st.lam);
+    // fill triangle (front facets only)
+    const tri=[...arc(B,C), ...arc(C,A), ...arc(A,B)];
+    const fp=tri.map(proj);
+    if(fp.filter(p=>p.front).length>fp.length*.5){
+      ctx.beginPath(); fp.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath();
+      ctx.fillStyle='rgba(255,90,81,.20)'; ctx.fill();
+    }
+    strokePts(arc(B,C),'#ff5a51',4,.3); strokePts(arc(C,A),'#ff5a51',4,.3); strokePts(arc(A,B),'#ff5a51',4,.3);
+
+    // angle arcs: small arcs around each vertex on the sphere
+    function cornerArc(V,P1,P2,label){
+      const rad=0.13, pts=[];
+      const t1=slerp(V,P1,0), d1=tangent(V,P1), d2=tangent(V,P2);
+      const ang=Math.acos(Math.max(-1,Math.min(1,dot(d1,d2))));
+      for(let i=0;i<=30;i++){
+        const t=i/30*ang;
+        // rotate d1 toward d2 in tangent plane
+        const e2=norm(sub(d2,scale(d1,dot(d1,d2))));
+        const dir=add(scale(d1,Math.cos(t)),scale(e2,Math.sin(t)));
+        pts.push(norm(add(scale(V,Math.cos(rad)),scale(dir,Math.sin(rad)))));
+      }
+      strokePts(pts,'#ffd166',3,.3);
+      const P=proj(V);
+      ctx.beginPath(); ctx.arc(P.x,P.y,6,0,Math.PI*2); ctx.fillStyle=P.front?'#fff':'rgba(255,255,255,.35)'; ctx.fill();
+      if(P.front){ ctx.font='800 13px system-ui'; ctx.fillStyle='#fff'; ctx.fillText(label,P.x+10,P.y-10); }
+    }
+    cornerArc(A,B,C,`A  ${st.lam.toFixed(0)}°`);
+    cornerArc(B,A,C,'B  90°');
+    cornerArc(C,A,B,'C  90°');
+
+    ctx.font='700 12px system-ui'; ctx.fillStyle='rgba(220,235,250,.9)';
+    ctx.fillText(`Angle sum = ${(180+st.lam).toFixed(0)}°   (a flat-plane triangle would sum to 180°)`,16,24);
+  }
+  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2], add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],
+        sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]], scale=(a,k)=>[a[0]*k,a[1]*k,a[2]*k],
+        norm=a=>{const m=Math.hypot(...a)||1;return scale(a,1/m)};
+  function tangent(V,P){ return norm(sub(P,scale(V,dot(V,P)))); }
+
+  function update(){
+    const lam=st.lam, E=lam, areaKm=E*D2R*R_KM*R_KM, frac=lam/720;
+    document.getElementById('lamVal').textContent=lam+'°';
+    document.getElementById('aA').textContent=lam+'°';
+    document.getElementById('sum').textContent=(180+lam)+'°';
+    document.getElementById('excess').textContent=`spherical excess E = ${lam}° = ${(lam*D2R).toFixed(3)} rad`;
+    document.getElementById('area').textContent=(areaKm/1e6).toFixed(1)+' M km²';
+    const nice = lam===90?'1/8 ':lam===180?'1/4 ':'';
+    document.getElementById('frac').textContent=`${nice}(${(frac*100).toFixed(1)}%)`;
+    draw();
+  }
+  const lamEl=document.getElementById('lam');
+  lamEl.addEventListener('input',()=>{st.lam=+lamEl.value;update();});
+  document.getElementById('b90').onclick=()=>{st.lam=90;lamEl.value=90;update();};
+  document.getElementById('bReset').onclick=()=>{st.yaw=-45*D2R;st.pitch=25*D2R;st.zoom=1;draw();};
+
+  let drag=null;
+  cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{ if(!drag) return;
+    st.yaw+=(e.clientX-drag.x)*.008; st.pitch=Math.max(-1.45,Math.min(1.45,st.pitch+(e.clientY-drag.y)*.008));
+    drag={x:e.clientX,y:e.clientY}; draw(); });
+  cv.addEventListener('pointerup',()=>drag=null);
+  cv.addEventListener('pointercancel',()=>drag=null);
+  cv.addEventListener('wheel',e=>{e.preventDefault();st.zoom=Math.max(.6,Math.min(1.8,st.zoom*(e.deltaY>0?.93:1.07)));draw();},{passive:false});
+  window.addEventListener('resize',resize);
+  resize(); update();
+})();
+</script>
+</body>
+</html>

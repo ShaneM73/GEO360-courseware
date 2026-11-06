@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLR vs Mirrorless Exposure Demo</title>
+</head>
+<body style="margin:0">
+<div id="cameraExposureDemo" class="cam-root">
+  <style>
+    #cameraExposureDemo{background:#f4f7fb;color:#172033;padding:24px;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;border-radius:0;min-width:0}
+    #cameraExposureDemo *{box-sizing:border-box}
+    #cameraExposureDemo .intro{max-width:1080px;margin:0 auto 18px;display:flex;gap:16px;justify-content:space-between;align-items:flex-end;flex-wrap:wrap}
+    #cameraExposureDemo h2{font-size:clamp(1.3rem,3vw,2rem);margin:0 0 5px;font-weight:800;letter-spacing:-.02em}
+    #cameraExposureDemo .sub{margin:0;color:#596579;max-width:720px;font-size:.95rem;line-height:1.5}
+    #cameraExposureDemo .controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+    #cameraExposureDemo button,#cameraExposureDemo select{min-height:44px;border-radius:10px;border:1px solid #c7d0df;font:inherit;font-size:.9rem}
+    #cameraExposureDemo button{padding:0 15px;background:#fff;color:inherit;cursor:pointer;font-weight:650}
+    #cameraExposureDemo button.primary{background:#1f5fae;color:#fff;border-color:transparent}
+    #cameraExposureDemo button:focus-visible,#cameraExposureDemo select:focus-visible{outline:3px solid #6aa8ff;outline-offset:2px}
+    #cameraExposureDemo select{padding:0 36px 0 12px;background:#fff;color:inherit}
+    #cameraExposureDemo .mode-label{font-size:.8rem;color:#596579;display:flex;flex-direction:column;gap:3px}
+    #cameraExposureDemo .timeline{max-width:1080px;margin:0 auto 18px;display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+    #cameraExposureDemo .phase{border:1px solid #d6ddea;border-radius:10px;padding:9px 7px;text-align:center;font-size:.78rem;color:#596579;background:#fff;transition:.2s ease;cursor:pointer}
+    #cameraExposureDemo .phase.active{background:#e9f2ff;border-color:#6aa8ff;color:#123b70;font-weight:750}
+    #cameraExposureDemo .phase.done{color:#2f6a3a;border-color:#9bc7a3}
+    #cameraExposureDemo .grid{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    #cameraExposureDemo .panel{min-width:0;border:1px solid #d7deea;background:#fff;border-radius:16px;overflow:hidden}
+    #cameraExposureDemo .panel-head{padding:14px 16px;border-bottom:1px solid #e0e5ee;display:flex;justify-content:space-between;gap:12px;align-items:center}
+    #cameraExposureDemo .panel-head h3{margin:0;font-size:1.08rem}
+    #cameraExposureDemo .tag{font-size:.74rem;font-weight:750;padding:5px 8px;border-radius:999px;background:#eef3f9;white-space:nowrap}
+    #cameraExposureDemo .viz-wrap{padding:8px 10px 2px}
+    #cameraExposureDemo svg{display:block;width:100%;height:auto;max-height:330px}
+    #cameraExposureDemo .body{fill:#dfe6ef;stroke:#657386;stroke-width:2}
+    #cameraExposureDemo .lens{fill:#a9d9f4;stroke:#407b9d;stroke-width:2}
+    #cameraExposureDemo .glass{fill:#c9ecff;opacity:.85}
+    #cameraExposureDemo .sensor{fill:#2a3544;stroke:#586678;stroke-width:2}
+    #cameraExposureDemo .sensor.live{fill:#ffbd3b;filter:drop-shadow(0 0 7px rgba(255,188,59,.6))}
+    #cameraExposureDemo .mirror{stroke:#78bdf2;stroke-width:9;stroke-linecap:round;transition:transform .32s ease}
+    #cameraExposureDemo .shutter{fill:#596678;transition:opacity .18s ease,transform .25s ease}
+    #cameraExposureDemo .beam{fill:none;stroke:#f2b90c;stroke-width:5;stroke-linecap:round;stroke-dasharray:12 9;opacity:0;transition:opacity .18s ease}
+    #cameraExposureDemo .beam.on{opacity:1;animation:camDash .55s linear infinite}
+    #cameraExposureDemo .electron{fill:none;stroke:#4ebd83;stroke-width:4;stroke-dasharray:7 7;opacity:0;transition:opacity .18s ease}
+    #cameraExposureDemo .electron.on{opacity:1;animation:camDash .7s linear infinite}
+    #cameraExposureDemo .screen{fill:#edf6ff;stroke:#4ebd83;stroke-width:3}
+    #cameraExposureDemo .screen.black{fill:#080b0f;stroke:#52606d}
+    #cameraExposureDemo .scan{fill:#6ee3a1;opacity:0}
+    #cameraExposureDemo .scan.on{opacity:.9;animation:scanLine 1s linear infinite}
+    #cameraExposureDemo .label{font-size:13px;fill:#172033;font-weight:700}
+    #cameraExposureDemo .small{font-size:11px;fill:#596579}
+    #cameraExposureDemo .status{padding:10px 16px 15px;display:grid;gap:8px}
+    #cameraExposureDemo .status strong{font-size:.95rem}
+    #cameraExposureDemo .status p{margin:0;color:#596579;font-size:.86rem;line-height:1.45;min-height:38px}
+    #cameraExposureDemo .mini-seq{display:flex;gap:5px;flex-wrap:wrap}
+    #cameraExposureDemo .mini-seq span{font-size:.7rem;border-radius:6px;padding:4px 6px;background:#f0f3f7;color:#576273}
+    #cameraExposureDemo .mini-seq span.hot{background:#fff1c7;color:#6f4b00;font-weight:750}
+    #cameraExposureDemo .note{max-width:1080px;margin:15px auto 0;padding:12px 14px;border-left:4px solid #7797bf;background:#edf3fa;border-radius:8px;font-size:.82rem;line-height:1.5;color:#4f5c6d}
+    #cameraExposureDemo .legend{max-width:1080px;margin:12px auto 0;display:flex;gap:16px;flex-wrap:wrap;font-size:.76rem;color:#596579}
+    #cameraExposureDemo .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+    #cameraExposureDemo .yellow{background:#f2b90c}.green{background:#4ebd83}.amber{background:#ffbd3b}
+    #cameraExposureDemo .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @keyframes camDash{to{stroke-dashoffset:-42}}
+    @keyframes scanLine{0%{transform:translateY(-42px)}100%{transform:translateY(42px)}}
+    @media(max-width:760px){#cameraExposureDemo{padding:16px 12px}#cameraExposureDemo .grid{grid-template-columns:1fr}#cameraExposureDemo .timeline{grid-template-columns:1fr 1fr 1fr}#cameraExposureDemo .controls{width:100%}#cameraExposureDemo .mode-label{width:100%}#cameraExposureDemo select{width:100%}}
+    @media(prefers-reduced-motion:reduce){#cameraExposureDemo *{animation:none!important;transition:none!important}}
+  </style>
+
+  <div class="intro">
+    <div>
+      <h2>What moves when you take the picture?</h2>
+      <p class="sub">Follow one exposure from composition to recovery. Yellow dashed lines represent actual light; green dashed lines represent the electronic image signal sent to a display.</p>
+    </div>
+    <div class="controls" aria-label="Animation controls">
+      <button type="button" class="primary" id="camPlay">▶ Play both</button>
+      <button type="button" id="camStep">Step →</button>
+      <button type="button" id="camReset">Reset</button>
+      <label class="mode-label">Mirrorless shutter mode
+        <select id="mirrorlessMode">
+          <option value="mechanical">Mechanical shutter</option>
+          <option value="electronic">Electronic shutter</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div class="timeline" aria-label="Exposure timeline">
+    <div class="phase active" data-phase="0">1 · Compose</div>
+    <div class="phase" data-phase="1">2 · Shutter press</div>
+    <div class="phase" data-phase="2">3 · Exposure</div>
+    <div class="phase" data-phase="3">4 · Exposure ends</div>
+    <div class="phase" data-phase="4">5 · Recover</div>
+  </div>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="slrTitle">
+      <div class="panel-head"><h3 id="slrTitle">SLR / DSLR</h3><span class="tag">Optical viewfinder</span></div>
+      <div class="viz-wrap">
+        <svg viewBox="0 0 520 300" role="img" aria-label="Simplified cross section of an SLR camera showing lens, reflex mirror, pentaprism, optical viewfinder, shutter and sensor">
+          <rect class="body" x="155" y="55" width="305" height="190" rx="28"/>
+          <rect class="body" x="228" y="18" width="145" height="64" rx="20"/>
+          <rect class="lens" x="27" y="92" width="160" height="116" rx="22"/>
+          <ellipse class="glass" cx="65" cy="150" rx="15" ry="48"/><ellipse class="glass" cx="112" cy="150" rx="18" ry="48"/><ellipse class="glass" cx="157" cy="150" rx="12" ry="46"/>
+          <polygon points="267,63 309,34 351,63 337,106 281,106" fill="none" stroke="#8ca1b8" stroke-width="7"/>
+          <circle cx="445" cy="77" r="23" fill="none" stroke="#7d8a9a" stroke-width="5"/><circle cx="445" cy="77" r="7" fill="#7d8a9a"/>
+          <line id="slrMirror" class="mirror" x1="278" y1="182" x2="325" y2="135"/>
+          <circle cx="325" cy="135" r="6" fill="#78bdf2" aria-hidden="true"/>
+          <rect id="slrCurtain1" class="shutter" x="380" y="98" width="13" height="104" rx="4"/>
+          <rect id="slrCurtain2" class="shutter" x="395" y="98" width="13" height="104" rx="4"/>
+          <rect id="slrSensor" class="sensor" x="418" y="105" width="18" height="90" rx="3"/>
+          <path id="slrBeamLens" class="beam" d="M15 150 H292"/>
+          <path id="slrBeamView" class="beam" d="M295 150 L295 86 L310 66 H420"/>
+          <path id="slrBeamSensor" class="beam" d="M15 150 H428"/>
+          <text class="label" x="68" y="232">Lens</text><text class="label" x="259" y="225">Reflex mirror</text><text class="label" x="267" y="15">Pentaprism</text><text class="label" x="402" y="224">Sensor</text><text class="small" x="409" y="45">eye</text>
+        </svg>
+      </div>
+      <div class="status">
+        <strong id="slrState">Composing: mirror down, sensor covered</strong>
+        <p id="slrExplain">Light is reflected upward by the 45° mirror, through the pentaprism and into your eye. The imaging sensor is not yet receiving the scene.</p>
+        <div class="mini-seq" id="slrSeq"><span class="hot">Mirror down</span><span>Mirror up</span><span>Shutter open</span><span>Sensor exposed</span><span>Mirror returns</span></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="mirrorTitle">
+      <div class="panel-head"><h3 id="mirrorTitle">Mirrorless</h3><span class="tag" id="mirrorTag">Mechanical shutter</span></div>
+      <div class="viz-wrap">
+        <svg viewBox="0 0 520 300" role="img" aria-label="Simplified cross section of a mirrorless camera showing lens, shutter, image sensor, processor and electronic viewfinder">
+          <rect class="body" x="155" y="61" width="306" height="184" rx="28"/>
+          <rect class="body" x="338" y="24" width="115" height="58" rx="18"/>
+          <rect class="lens" x="27" y="92" width="160" height="116" rx="22"/>
+          <ellipse class="glass" cx="65" cy="150" rx="15" ry="48"/><ellipse class="glass" cx="112" cy="150" rx="18" ry="48"/><ellipse class="glass" cx="157" cy="150" rx="12" ry="46"/>
+          <rect id="mlCurtain1" class="shutter" x="318" y="99" width="13" height="102" rx="4" opacity="0"/>
+          <rect id="mlCurtain2" class="shutter" x="333" y="99" width="13" height="102" rx="4" opacity="0"/>
+          <rect id="mlSensor" class="sensor live" x="357" y="105" width="22" height="90" rx="3"/>
+          <rect x="396" y="123" width="34" height="54" rx="7" fill="#4c596b"/><circle cx="413" cy="150" r="9" fill="#8592a3"/>
+          <rect id="evfScreen" class="screen" x="376" y="40" width="48" height="27" rx="4"/>
+          <rect id="scanLine" class="scan" x="358" y="146" width="20" height="5" rx="2"/>
+          <path id="mlBeam" class="beam on" d="M15 150 H367"/>
+          <path id="mlSignal" class="electron on" d="M380 150 H412 V78 H400"/>
+          <text class="label" x="68" y="232">Lens</text><text class="label" x="342" y="224">Sensor</text><text class="label" x="389" y="205">Processor</text><text class="label" x="371" y="22">EVF</text>
+        </svg>
+      </div>
+      <div class="status">
+        <strong id="mlState">Composing: sensor continuously active</strong>
+        <p id="mlExplain">Light goes straight through the lens to the image sensor. The sensor continuously produces frames that are sent electronically to the EVF or rear LCD.</p>
+        <div class="mini-seq" id="mlSeq"><span class="hot">Live view</span><span>Trigger</span><span>EVF interrupted</span><span>Readout</span><span>Live view resumes</span></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="legend"><span><i class="dot yellow"></i>Optical light path</span><span><i class="dot green"></i>Electronic video signal</span><span><i class="dot amber"></i>Sensor actively receiving / integrating light</span></div>
+  <div class="note"><strong>Key idea:</strong> the SLR must physically move its mirror out of the optical path before the sensor can see the scene. A mirrorless camera has no reflex mirror; its sensor already sees the scene during composition. During a long single exposure, the sensor is integrating the photograph, so its normal live-video feed to the EVF is interrupted and resumes after exposure/readout.</div>
+  <div id="camLive" class="sr-only" aria-live="polite"></div>
+
+  <script>
+    (()=>{
+      const root=document.getElementById('cameraExposureDemo');
+      if(!root||root.dataset.ready==='1') return;
+      root.dataset.ready='1';
+      const q=s=>root.querySelector(s), qa=s=>[...root.querySelectorAll(s)];
+      const play=q('#camPlay'), step=q('#camStep'), reset=q('#camReset'), mode=q('#mirrorlessMode');
+      const phases=qa('.phase');
+      let phase=0,timer=null,playing=false;
+      const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const wait=reduced?700:1150;
+
+      const slrText=[
+        ['Composing: mirror down, sensor covered','Light is reflected upward by the 45° mirror, through the pentaprism and into your eye. The imaging sensor is not yet receiving the scene.'],
+        ['Shutter pressed: mirror flips upward','The reflex mirror swings upward around its right-hand hinge, clearing the lens-to-sensor optical path. The shutter is still closed, so incoming light stops at the shutter curtain.'],
+        ['Exposure: shutter opens','With the mirror raised, the shutter curtains uncover the sensor and light travels directly from the lens to the sensor.'],
+        ['Exposure ends: shutter closes','The second shutter curtain covers the sensor, ending the exposure. The captured image can now be read from the sensor.'],
+        ['Recovery: mirror returns','The shutter resets and the mirror swings back down. The optical viewfinder immediately shows the real scene again.']
+      ];
+      const mechText=[
+        ['Composing: sensor continuously active','Light goes straight through the lens to the image sensor. The sensor continuously produces frames that are sent electronically to the EVF or rear LCD.'],
+        ['Shutter pressed: mechanical cycle begins','There is no mirror to move. Light still travels through the lens, but the mechanical shutter closes in front of the sensor, so the light stops at the shutter curtain instead of reaching the sensor.'],
+        ['Exposure: first curtain opens','The shutter uncovers the sensor. Light reaches the sensor and is integrated for the selected exposure time. During a long single exposure, the sensor is busy recording the photograph, so the normal live EVF feed is interrupted.'],
+        ['Exposure ends: second curtain closes','The second curtain finishes its travel and ends the exposure. The sensor completes the still-image readout; the EVF remains dark or frozen until live view is restored.'],
+        ['Recovery: live view resumes','The shutter reopens for live view and the sensor again streams frames continuously to the EVF or rear LCD.']
+      ];
+      const elecText=[
+        ['Composing: sensor continuously active','Light reaches the sensor continuously and the live image is sent to the EVF or LCD. No reflex mirror or mechanical shutter movement is required.'],
+        ['Shutter pressed: electronic exposure starts','The camera electronically marks the start of image acquisition. Nothing large has to move inside the camera.'],
+        ['Exposure: sensor integrates light','The sensor is devoted to the still exposure. For a long single exposure, such as 1 minute, the normal sensor-to-EVF live-video stream is interrupted while photons are accumulated.'],
+        ['Exposure ends: electronic readout completes','The sensor completes the still-image readout. The normal live EVF feed remains interrupted until the camera returns to live-view operation.'],
+        ['Recovery: live view continues','The sensor continues supplying frames to the EVF or LCD, often with little or no blackout on advanced cameras.']
+      ];
+
+      function setMini(container,index){
+        [...container.children].forEach((el,i)=>el.classList.toggle('hot',i===index));
+      }
+
+      function render(){
+        phases.forEach((el,i)=>{
+          el.classList.toggle('active',i===phase);
+          el.classList.toggle('done',i<phase);
+        });
+
+        const slrMirror=q('#slrMirror'), sc1=q('#slrCurtain1'), sc2=q('#slrCurtain2'), ss=q('#slrSensor');
+        const lens=q('#slrBeamLens'), view=q('#slrBeamView'), direct=q('#slrBeamSensor');
+
+        slrMirror.setAttribute('transform',phase===0||phase===4?'rotate(0 325 135)':'rotate(45 325 135)');
+
+        const slrOpen=phase===2;
+        sc1.style.opacity=slrOpen?'0':'1';
+        sc2.style.opacity=slrOpen?'0':'1';
+        ss.classList.toggle('live',phase===2);
+
+        lens.classList.toggle('on',phase===0||phase===1||phase===2||phase===4);
+        view.classList.toggle('on',phase===0||phase===4);
+
+        if(phase===1){
+          direct.setAttribute('d','M15 150 H385');
+          direct.classList.add('on');
+        }else if(phase===2){
+          direct.setAttribute('d','M15 150 H428');
+          direct.classList.add('on');
+        }else{
+          direct.classList.remove('on');
+        }
+
+        q('#slrState').textContent=slrText[phase][0];
+        q('#slrExplain').textContent=slrText[phase][1];
+        setMini(q('#slrSeq'),phase);
+
+        const electronic=mode.value==='electronic';
+        const mc1=q('#mlCurtain1'), mc2=q('#mlCurtain2'), ms=q('#mlSensor'), beam=q('#mlBeam'), signal=q('#mlSignal'), evf=q('#evfScreen'), scan=q('#scanLine');
+        q('#mirrorTag').textContent=electronic?'Electronic shutter':'Mechanical shutter';
+
+        if(electronic){
+          mc1.style.opacity='0';
+          mc2.style.opacity='0';
+          beam.setAttribute('d','M15 150 H367');
+          beam.classList.add('on');
+          // During a long single exposure, the sensor still receives light,
+          // but it cannot simultaneously provide the normal live-view video stream.
+          const exposingOrReading = phase===2 || phase===3;
+          ms.classList.add('live');
+          signal.classList.toggle('on',!exposingOrReading);
+          evf.classList.toggle('black',exposingOrReading);
+          scan.classList.toggle('on',phase===3);
+        }else{
+          const shutterClosed = phase===1 || phase===3;
+          const exposingOrReading = phase===2 || phase===3;
+          mc1.style.opacity=shutterClosed?'1':'0';
+          mc2.style.opacity=shutterClosed?'1':'0';
+          beam.setAttribute('d',shutterClosed?'M15 150 H323':'M15 150 H367');
+          beam.classList.add('on');
+          // Orange sensor during exposure means photon integration, not live-view output.
+          ms.classList.toggle('live',phase===0 || phase===2 || phase===4);
+          signal.classList.toggle('on',phase===0 || phase===4);
+          evf.classList.toggle('black',phase===1 || exposingOrReading);
+          scan.classList.remove('on');
+        }
+
+        const txt=electronic?elecText:mechText;
+        q('#mlState').textContent=txt[phase][0];
+        q('#mlExplain').textContent=txt[phase][1];
+        setMini(q('#mlSeq'),phase);
+        q('#camLive').textContent=`Phase ${phase+1}. ${slrText[phase][0]}. Mirrorless: ${txt[phase][0]}.`;
+      }
+
+      function stop(){
+        if(timer){clearTimeout(timer);timer=null}
+        playing=false;
+        play.textContent='▶ Play both';
+      }
+
+      function advance(){
+        phase=(phase+1)%5;
+        render();
+      }
+
+      function loop(){
+        if(!playing)return;
+        if(phase>=4){stop();return}
+        timer=setTimeout(()=>{
+          phase++;
+          render();
+          loop();
+        },wait);
+      }
+
+      play.addEventListener('click',()=>{
+        if(playing){stop();return}
+        if(phase>=4)phase=0;
+        playing=true;
+        play.textContent='❚❚ Pause';
+        render();
+        loop();
+      });
+
+      step.addEventListener('click',()=>{
+        stop();
+        advance();
+      });
+
+      reset.addEventListener('click',()=>{
+        stop();
+        phase=0;
+        render();
+      });
+
+      mode.addEventListener('change',()=>{
+        stop();
+        render();
+      });
+
+      phases.forEach((el,i)=>{
+        el.tabIndex=0;
+        el.setAttribute('role','button');
+        el.addEventListener('click',()=>{
+          stop();
+          phase=i;
+          render();
+        });
+        el.addEventListener('keydown',e=>{
+          if(e.key==='Enter'||e.key===' '){
+            e.preventDefault();
+            stop();
+            phase=i;
+            render();
+          }
+        });
+      });
+
+      render();
+    })();
+  </script>
+</div>
+</body>
+</html>

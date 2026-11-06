@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Spherical Triangle (Paths)</name>
+
+    <Style id="redPath">
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>5</width>
+      </LineStyle>
+    </Style>
+
+    <!-- Triangle Path -->
+    <Placemark>
+      <name>Spherical Triangle Perimeter (270° Total)</name>
+      <styleUrl>#redPath</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          0,0,0
+          90,0,0
+          90,89.999,0
+          0,0,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+
+    <!-- Vertex Labels -->
+    <Placemark>
+      <name>North Pole Vertex (90° Angle)</name>
+      <Point><coordinates>0,90,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>Equator / Prime Meridian Vertex (90° Angle)</name>
+      <Point><coordinates>0,0,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>Equator / 90°E Vertex (90° Angle)</name>
+      <Point><coordinates>90,0,0</coordinates></Point>
+    </Placemark>
+
+  </Document>
+</kml>

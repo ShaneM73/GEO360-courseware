@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="GEO 360 Aerial Photo Interpretation — interactive courseware modules from geometric foundations to stereo height measurement." />
+<title>GEO 360 Courseware</title>
+<style>
+  :root{
+    --navy:#0e1c2f; --navy2:#172a46; --ink:#132238; --muted:#66778e; --line:#dbe3ed;
+    --bg:#f3f6fa; --panel:#fff; --accent:#1769e0; --accent-soft:#e8f1ff;
+    --u1:#ff5a51; --u2:#1c9b62; --u3:#7447d6; --done:#17845d;
+    --side:290px; --top:56px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
+  a{color:inherit}
+  button{font:inherit;cursor:pointer}
+
+  /* ---------- top bar ---------- */
+  .topbar{height:var(--top);background:var(--navy);color:#fff;display:flex;align-items:center;gap:14px;padding:0 16px;position:relative;z-index:20}
+  .menuBtn{display:none;border:1px solid #2d4566;background:var(--navy2);color:#fff;border-radius:8px;width:36px;height:34px}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;min-width:0}
+  .brand svg{flex:0 0 auto}
+  .brand b{font-size:16px;letter-spacing:-.01em;white-space:nowrap}
+  .brand small{display:block;font-size:11px;color:#9fb3cc;font-weight:500;white-space:nowrap}
+  .crumb{margin-left:auto;display:flex;align-items:center;gap:10px;min-width:0}
+  .progress{display:flex;align-items:center;gap:8px;font-size:12px;color:#bdc9da;white-space:nowrap}
+  .bar{width:120px;height:6px;border-radius:9px;background:#24395a;overflow:hidden}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#4fa9ff,#68dfad);width:0;transition:width .3s}
+
+  /* ---------- layout ---------- */
+  .shell{display:grid;grid-template-columns:var(--side) minmax(0,1fr);height:calc(100% - var(--top))}
+  .shell.collapsed{grid-template-columns:0 minmax(0,1fr)}
+  nav.side{background:#fff;border-right:1px solid var(--line);overflow-y:auto;padding:14px 12px 24px}
+  .collapsed nav.side{visibility:hidden}
+  .homeLink{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;text-decoration:none;font-weight:750;font-size:13.5px;color:#2a3b55;margin-bottom:8px}
+  .homeLink:hover,.homeLink.active{background:var(--accent-soft);color:#0c4fae}
+  .unit{margin-top:14px}
+  .unitHead{display:flex;align-items:center;gap:8px;padding:0 10px 6px;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7a8aa0}
+  .unitHead i{width:8px;height:8px;border-radius:50%}
+  .mod{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#2a3b55;border:1px solid transparent}
+  .mod:hover{background:#f5f8fc}
+  .mod.active{background:var(--accent-soft);border-color:#bcd6ff}
+  .num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;background:#eef2f7;color:#4a5c74}
+  .mod.active .num{background:var(--accent);color:#fff}
+  .mod .t{font-size:13px;font-weight:700;line-height:1.25}
+  .mod .s{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:1px}
+  .check{width:16px;height:16px;border-radius:50%;border:2px solid #cfd8e3}
+  .mod.done .check{border-color:var(--done);background:var(--done) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat}
+  .sideFoot{margin:22px 10px 0;font-size:11px;color:#8b9ab0;line-height:1.5}
+  .sideFoot button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 8px;font-size:11px;color:#52647a;margin-top:6px}
+
+  /* ---------- content ---------- */
+  .content{min-width:0;display:flex;flex-direction:column;height:100%}
+  .modbar{background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .modbar .meta{min-width:0;flex:1}
+  .modbar .unitTag{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+  .modbar h1{font-size:17px;margin:1px 0 0;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tools{display:flex;gap:6px;flex-wrap:wrap}
+  .tools button,.tools a{border:1px solid #ccd7e4;background:#fff;color:#30445f;padding:7px 10px;border-radius:9px;font-size:12px;font-weight:750;text-decoration:none;white-space:nowrap}
+  .tools button:hover,.tools a:hover{background:#f5f9ff;border-color:#9cb2cf}
+  .tools .primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .tools .primary:hover{background:#0f58c4}
+  .tools button:disabled{opacity:.4;cursor:default}
+  .brief{background:#fbfcfe;border-bottom:1px solid var(--line);padding:10px 16px;display:none;gap:18px;font-size:12.5px;line-height:1.5;color:#3c4d64}
+  .brief.open{display:grid;grid-template-columns:1.2fr 1fr 1fr}
+  .brief h4{margin:0 0 4px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#6b7c92}
+  .brief ul{margin:0;padding-left:18px}
+  .frameWrap{flex:1;min-height:0;position:relative;background:var(--bg)}
+  iframe{border:0;width:100%;height:100%;display:block;background:#fff}
+
+  /* ---------- home ---------- */
+  .home{flex:1;overflow-y:auto}
+  .hero{background:linear-gradient(135deg,#0e1c2f,#17375e 60%,#155b68);color:#fff;padding:42px clamp(20px,5vw,60px) 36px}
+  .hero .kick{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#8fc3ff}
+  .hero h2{font-size:clamp(26px,3.6vw,40px);margin:8px 0 10px;letter-spacing:-.03em;line-height:1.08}
+  .hero p{max-width:820px;color:#c9d7e8;line-height:1.6;margin:0}
+  .hero .start{margin-top:20px;display:inline-flex;gap:8px;align-items:center;background:#fff;color:#0e1c2f;border:0;border-radius:10px;padding:11px 16px;font-weight:800;text-decoration:none}
+  .path{padding:28px clamp(20px,5vw,60px) 40px;max-width:1400px}
+  .path h3{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#6b7c92;margin:0 0 14px}
+  .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .unitCard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 10px 28px rgba(28,48,77,.06);position:relative}
+  .unitCard .bar2{position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:16px 0 0 16px}
+  .unitCard h4{margin:0;font-size:17px}
+  .unitCard .q{font-size:12.5px;color:var(--muted);margin:4px 0 12px;line-height:1.45}
+  .unitCard a{display:grid;grid-template-columns:26px 1fr;gap:9px;align-items:start;text-decoration:none;padding:8px;border-radius:9px}
+  .unitCard a:hover{background:#f5f8fc}
+  .unitCard a .num{width:26px;height:26px;font-size:11px}
+  .unitCard a b{font-size:13.5px;display:block}
+  .unitCard a span{font-size:11.5px;color:var(--muted);line-height:1.4}
+  .thread{margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}
+  .thread h3{margin-bottom:10px}
+  .chain{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12.5px}
+  .chain span{background:#f1f6fd;border:1px solid #d6e4f7;border-radius:8px;padding:6px 9px;font-weight:700;color:#24456f}
+  .chain b{color:#9aaac0}
+  .note{margin-top:14px;font-size:12px;color:#6b7c92;line-height:1.55}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:900px){
+    .menuBtn{display:block}
+    .shell,.shell.collapsed{grid-template-columns:minmax(0,1fr)}
+    nav.side{position:fixed;top:var(--top);left:0;bottom:0;width:min(86vw,var(--side));z-index:15;transform:translateX(-100%);transition:transform .22s;box-shadow:8px 0 28px rgba(10,24,46,.18);visibility:visible!important}
+    .shell.navOpen nav.side{transform:none}
+    .progress .bar{display:none}
+    .brief.open{grid-template-columns:1fr}
+    .flow{grid-template-columns:1fr}
+    #collapseBtn{display:none}
+  }
+  @media (max-width:560px){ .brand small{display:none} .tools .hideSm{display:none} }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <button class="menuBtn" id="menuBtn" aria-label="Open module list">☰</button>
+  <a class="brand" href="#/">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="3" y="3" width="28" height="28" rx="6" fill="#172a46" stroke="#4fa9ff" stroke-width="2"/><path d="M8 25 17 9l9 16Z" fill="none" stroke="#ff5a51" stroke-width="2.2" stroke-linejoin="round"/><circle cx="17" cy="19" r="2.4" fill="#68dfad"/></svg>
+    <span><b>GEO 360 Courseware</b><small>Aerial Photo Interpretation · Missouri State University</small></span>
+  </a>
+  <div class="crumb"><div class="progress"><span id="progText">0 of 8 explored</span><div class="bar"><i id="progBar"></i></div></div></div>
+</header>
+
+<div class="shell" id="shell">
+  <nav class="side" id="side" aria-label="Course modules"></nav>
+  <section class="content">
+    <div class="home" id="home"></div>
+    <div class="modbar" id="modbar" hidden>
+      <div class="meta"><div class="unitTag" id="unitTag"></div><h1 id="modTitle"></h1></div>
+      <div class="tools">
+        <button id="collapseBtn" title="Hide or show the module list" class="hideSm">⇤ Focus</button>
+        <button id="briefBtn" aria-expanded="false">Lesson brief</button>
+        <a id="openNew" target="_blank" rel="noopener" class="hideSm">Open full page ↗</a>
+        <button id="prevBtn">← Prev</button>
+        <button id="nextBtn" class="primary">Next →</button>
+      </div>
+    </div>
+    <div class="brief" id="brief"></div>
+    <div class="frameWrap" id="frameWrap" hidden><iframe id="frame" title="Course module"></iframe></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  /* =========================================================
+     COURSE MAP — edit this list to add, remove or reorder modules.
+     Each module is a standalone HTML file in /modules.
+     ========================================================= */
+  const UNITS = [
+    { id:'u1', name:'Unit 1 · Geometric Foundations', color:'var(--u1)',
+      question:'What geometry lets us measure the ground from a photograph — and where does it stop working?' },
+    { id:'u2', name:'Unit 2 · Image Acquisition', color:'var(--u2)',
+      question:'How is an aerial photo captured, positioned, and planned so that the whole site is covered?' },
+    { id:'u3', name:'Unit 3 · Photo Geometry & Measurement', color:'var(--u3)',
+      question:'How does relief distort a single photo, and how do two photos recover height?' }
+  ];
+  const MODULES = [
+    { slug:'similar-triangles', unit:'u1', file:'modules/01-similar-triangles.html',
+      title:'Similar Triangles', short:'Scale factors & proportional sides',
+      objectives:['Identify corresponding angles and sides','Use one scale factor to solve for unknown sides','Choose AA, SAS or SSS to prove similarity'],
+      connect:'Photo scale (f/H), relief displacement and parallax are all derived from similar triangles between the camera, the photo plane and the ground.',
+      activity:'Work through Notice → Match → Scale → Solve, then answer the "Can you guarantee similarity?" scenarios.' },
+    { slug:'spherical-triangle', unit:'u1', file:'modules/02-spherical-triangle.html',
+      title:'Geometry on a Sphere', short:'Non-Euclidean triangles on Earth',
+      objectives:['Explain why a spherical triangle\'s angles exceed 180°','Relate spherical excess to triangle area','Judge when a flat-plane approximation is acceptable'],
+      connect:'The Euclidean geometry of Module 1 holds for a photo footprint, but not for continent-sized areas — the reason datums and map projections exist.',
+      activity:'Set λ = 90° to match the class KML, then shrink λ and watch the angle sum approach 180°. Optional: open the KML in Google Earth.' },
+    { slug:'camera-exposure', unit:'u2', file:'modules/03-camera-exposure.html',
+      title:'SLR vs Mirrorless Exposure', short:'What moves when the shutter fires',
+      objectives:['Trace the light path through SLR and mirrorless cameras','Compare mechanical and electronic shutters','Describe live-view interruption during exposure'],
+      connect:'The camera is the sensor of photogrammetry. Knowing how an exposure is made explains frame timing, blackout and the shutter choice on mapping drones.',
+      activity:'Step through all five phases, then switch the mirrorless shutter mode and compare.' },
+    { slug:'gps-trilateration', unit:'u2', file:'modules/04-gps-trilateration.html',
+      title:'GPS Trilateration', short:'Why 3 satellites for 2D, 4 for 3D',
+      objectives:['Explain range circles and spheres','Describe the two-point ambiguity and how it is removed','Explain receiver clock bias and the 4-unknown solution'],
+      connect:'Every exposure station in a modern photo mission is tagged with GNSS coordinates — the camera\'s position (and H) comes from this geometry.',
+      activity:'Run the 2D and 3D demos step by step, visit the ambiguity tab, then step through the worked iteration in the math tab.' },
+    { slug:'mission-planner', unit:'u2', file:'modules/05-mission-planner.html',
+      title:'Drone Flight Mission Planner', short:'Scale, footprint, overlap & flight lines',
+      objectives:['Compute flying height from focal length and photo scale','Derive footprint, photo spacing and line spacing','Plan a mission that meets ≥60% forward and >20% side overlap'],
+      connect:'Combines similar triangles (scale = f/H), camera geometry and GNSS positioning into a real acquisition plan. Forward overlap creates the stereo pairs used in Module 8.',
+      activity:'Walk the seven workflow steps, fly the mission, then use the Photo-Distance tab to see how overlap sets the air base.' },
+    { slug:'relief-displacement', unit:'u3', file:'modules/06-relief-displacement.html',
+      title:'Relief Displacement', short:'d = hr / H for a single object',
+      objectives:['Explain why vertical objects lean radially on a vertical photo','Apply d = hr/H with consistent units','Derive the formula from similar triangles'],
+      connect:'The first major distortion in a single vertical photo, derived directly from the similar triangles of Module 1.',
+      activity:'Try each preset, then open the Derivation tab and follow the steps.' },
+    { slug:'relief-patterns', unit:'u3', file:'modules/07-relief-patterns.html',
+      title:'Relief Patterns & Terrain', short:'Radial displacement across the frame',
+      objectives:['Recognize the radial pattern across a whole photo','Predict how h, H and distance from PP change d','Explain why uneven terrain makes displacement irregular'],
+      connect:'Generalizes Module 6 from one object to the full photo — the basis for understanding orthorectification.',
+      activity:'Compare uniform heights with "Randomize heights", and vary flight height H.' },
+    { slug:'stereo-parallax', unit:'u3', file:'modules/08-stereo-parallax.html',
+      title:'Stereo Vision & Parallax', short:'Heights from overlapping photos',
+      objectives:['Define absolute and differential parallax','Explain why Y does not create y-parallax in ideal stereo','Estimate height with h = H·dP / (P_b + dP)'],
+      connect:'Relief displacement, seen from two exposure stations a distance B apart (set by Module 5\'s overlap), becomes measurable parallax — and parallax becomes height.',
+      activity:'Change h, B and H and watch Pₜ, P_b and dP. Then read the Derivation tab.' }
+  ];
+
+  /* ---------- state ---------- */
+  const $ = id => document.getElementById(id);
+  const store = {
+    get(){ try { return JSON.parse(localStorage.getItem('geo360-done')||'[]'); } catch(e){ return []; } },
+    set(v){ try { localStorage.setItem('geo360-done', JSON.stringify(v)); } catch(e){} }
+  };
+  let done = new Set(store.get());
+  const unitOf = id => UNITS.find(u=>u.id===id);
+  const idxOf = slug => MODULES.findIndex(m=>m.slug===slug);
+
+  /* ---------- sidebar ---------- */
+  function buildSide(){
+    let n = 0;
+    const html = [`<a class="homeLink" href="#/" id="homeLink">⌂ Course overview</a>`];
+    UNITS.forEach(u=>{
+      html.push(`<div class="unit"><div class="unitHead"><i style="background:${u.color}"></i>${u.name}</div>`);
+      MODULES.filter(m=>m.unit===u.id).forEach(m=>{
+        n = idxOf(m.slug)+1;
+        html.push(`<a class="mod" href="#/${m.slug}" data-slug="${m.slug}"><span class="num">${n}</span><span class="t">${m.title}<span class="s">${m.short}</span></span><span class="check" title="Explored"></span></a>`);
+      });
+      html.push('</div>');
+    });
+    html.push(`<div class="sideFoot">Modules are marked explored when you open them. Progress is saved in this browser only.<br><button id="resetProg">Reset progress</button></div>`);
+    $('side').innerHTML = html.join('');
+    $('resetProg').onclick = () => { done = new Set(); store.set([]); refreshNav(currentSlug()); };
+  }
+
+  /* ---------- home ---------- */
+  function buildHome(){
+    const cards = UNITS.map(u=>{
+      const items = MODULES.filter(m=>m.unit===u.id).map(m=>
+        `<a href="#/${m.slug}"><span class="num">${idxOf(m.slug)+1}</span><span><b>${m.title}</b><span>${m.short}</span></span></a>`).join('');
+      return `<div class="unitCard"><div class="bar2" style="background:${u.color}"></div><h4>${u.name}</h4><p class="q">${u.question}</p>${items}</div>`;
+    }).join('');
+    $('home').innerHTML = `
+      <div class="hero">
+        <div class="kick">GEO 360 · Aerial Photo Interpretation</div>
+        <h2>From similar triangles to stereo heights</h2>
+        <p>Eight interactive labs arranged as one learning path. Start with the geometry that makes photo measurement possible, learn how aerial images are captured and planned, then use that geometry to read distortion and height from the photographs themselves.</p>
+        <a class="start" href="#/${MODULES[0].slug}">Start with Module 1 →</a>
+      </div>
+      <div class="path">
+        <h3>Learning path</h3>
+        <div class="flow">${cards}</div>
+        <div class="thread">
+          <h3>The thread that connects them</h3>
+          <div class="chain">
+            <span>Similar triangles</span><b>→</b><span>Photo scale = f / H</span><b>→</b><span>Flying height & footprint</span><b>→</b><span>Overlap sets air base B</span><b>→</b><span>Relief displacement d = hr/H</span><b>→</b><span>Parallax → height h</span>
+          </div>
+          <p class="note">Module 2 marks the limit of this flat-plane geometry; Modules 3–4 supply the camera and the camera's position that every later calculation depends on.</p>
+        </div>
+      </div>`;
+  }
+
+  /* ---------- routing ---------- */
+  function currentSlug(){ return (location.hash.replace(/^#\/?/,'')||'').split('?')[0]; }
+  function refreshNav(slug){
+    document.querySelectorAll('.mod').forEach(a=>{
+      a.classList.toggle('active', a.dataset.slug===slug);
+      a.classList.toggle('done', done.has(a.dataset.slug));
+    });
+    $('homeLink').classList.toggle('active', !slug);
+    const k = MODULES.filter(m=>done.has(m.slug)).length;
+    $('progText').textContent = `${k} of ${MODULES.length} explored`;
+    $('progBar').style.width = (k/MODULES.length*100)+'%';
+  }
+  function route(){
+    const slug = currentSlug(), i = idxOf(slug);
+    $('shell').classList.remove('navOpen');
+    if(i < 0){
+      $('home').hidden=false; $('modbar').hidden=true; $('frameWrap').hidden=true; $('brief').classList.remove('open');
+      document.title='GEO 360 Courseware'; refreshNav(''); return;
+    }
+    const m = MODULES[i], u = unitOf(m.unit);
+    $('home').hidden=true; $('modbar').hidden=false; $('frameWrap').hidden=false;
+    $('unitTag').textContent = `${u.name} · Module ${i+1} of ${MODULES.length}`;
+    $('unitTag').style.color = u.color;
+    $('modTitle').textContent = m.title;
+    $('openNew').href = m.file;
+    $('prevBtn').disabled = i===0;
+    $('nextBtn').textContent = i===MODULES.length-1 ? 'Finish ✓' : 'Next →';
+    $('brief').innerHTML = `
+      <div><h4>Learning objectives</h4><ul>${m.objectives.map(o=>`<li>${o}</li>`).join('')}</ul></div>
+      <div><h4>How it connects</h4>${m.connect}</div>
+      <div><h4>Suggested activity</h4>${m.activity}</div>`;
+    const frame = $('frame');
+    if(frame.getAttribute('src') !== m.file) frame.setAttribute('src', m.file);
+    document.title = `${m.title} · GEO 360`;
+    done.add(slug); store.set([...done]); refreshNav(slug);
+  }
+
+  $('prevBtn').onclick = () => { const i=idxOf(currentSlug()); if(i>0) location.hash='#/'+MODULES[i-1].slug; };
+  $('nextBtn').onclick = () => { const i=idxOf(currentSlug()); location.hash = i<MODULES.length-1 ? '#/'+MODULES[i+1].slug : '#/'; };
+  $('briefBtn').onclick = () => { const o=$('brief').classList.toggle('open'); $('briefBtn').setAttribute('aria-expanded',o); };
+  $('collapseBtn').onclick = () => { const c=$('shell').classList.toggle('collapsed'); $('collapseBtn').textContent = c?'⇥ Show list':'⇤ Focus'; };
+  $('menuBtn').onclick = () => $('shell').classList.toggle('navOpen');
+  document.addEventListener('keydown', e => {
+    if(e.target.closest('input,textarea,select')) return;
+    if(e.altKey && e.key==='ArrowRight') $('nextBtn').click();
+    if(e.altKey && e.key==='ArrowLeft') $('prevBtn').click();
+  });
+  window.addEventListener('hashchange', route);
+
+  buildSide(); buildHome(); route();
+})();
+</script>
+</body>
+</html>

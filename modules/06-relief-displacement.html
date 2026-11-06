@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Relief Displacement Lab — Vertical Aerial Photography</title>
+<style>
+  :root{
+    --bg:#f4f7fb;
+    --panel:#ffffff;
+    --ink:#132238;
+    --muted:#66758c;
+    --line:#dce4ef;
+    --blue:#1769e0;
+    --blue2:#58a5ff;
+    --orange:#e86822;
+    --green:#14875d;
+    --red:#c83737;
+    --purple:#7447d6;
+    --shadow:0 10px 32px rgba(30,49,78,.09);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;}
+  button,input{font:inherit}
+  .app{min-height:100vh;display:flex;flex-direction:column}
+  header{background:#0d1b2e;color:#fff;padding:18px 24px 16px;box-shadow:0 4px 18px rgba(10,24,46,.18)}
+  .headrow{max-width:1500px;margin:auto;display:flex;align-items:flex-start;justify-content:space-between;gap:24px}
+  h1{font-size:26px;line-height:1.1;margin:0 0 5px;font-weight:760;letter-spacing:-.02em}
+  .sub{color:#b9c8de;font-size:14px;line-height:1.45;max-width:830px}
+  .formulaHero{display:flex;align-items:baseline;gap:10px;white-space:nowrap;background:#172a46;border:1px solid #2b4264;border-radius:12px;padding:10px 14px}
+  .formulaHero .eq{font:700 28px Georgia,"Times New Roman",serif;color:#fff}
+  .formulaHero small{font-size:11px;color:#a8bad3}
+
+  .toolbar{max-width:1500px;width:100%;margin:14px auto 0;padding:0 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .tabs{display:inline-flex;background:#e8edf5;border:1px solid #d9e1ec;border-radius:10px;padding:3px;gap:3px}
+  .tab{border:0;background:transparent;color:#44546c;padding:8px 12px;border-radius:7px;font-weight:700;font-size:13px;cursor:pointer}
+  .tab.active{background:#fff;color:#10233f;box-shadow:0 1px 5px rgba(25,44,72,.12)}
+  .preset{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
+  .preset button,.ghostBtn{border:1px solid #d3dce8;background:#fff;color:#33455f;border-radius:9px;padding:8px 10px;cursor:pointer;font-size:12px;font-weight:700}
+  .preset button:hover,.ghostBtn:hover{border-color:#9db3cf;background:#f9fbfe}
+
+  main{max-width:1500px;width:100%;margin:12px auto 26px;padding:0 18px;display:grid;grid-template-columns:310px minmax(0,1fr);gap:14px;flex:1}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .controls{padding:16px;align-self:start;position:sticky;top:12px}
+  .controls h2,.info h2{font-size:15px;margin:0 0 13px}
+  .ctrl{padding:12px 0;border-top:1px solid #edf1f6}
+  .ctrl:first-of-type{border-top:0;padding-top:3px}
+  .labelrow{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+  .labelrow label{font-size:13px;font-weight:750;color:#2a3b55}
+  .value{font-size:13px;font-weight:800;color:#0d5bc0;background:#edf5ff;border-radius:7px;padding:3px 7px;min-width:70px;text-align:center}
+  input[type=range]{width:100%;accent-color:var(--blue)}
+  .rangeEnds{display:flex;justify-content:space-between;color:#91a0b4;font-size:10px;margin-top:3px}
+  .hint{font-size:11px;color:var(--muted);line-height:1.4;margin-top:6px}
+  .resultBox{margin-top:12px;padding:13px;border-radius:12px;background:#f0f6ff;border:1px solid #cfe2ff}
+  .resultBox .big{font:800 30px Georgia,"Times New Roman",serif;color:#104f9f;margin:2px 0 3px}
+  .resultBox .mini{font-size:11px;color:#5b6f89}
+  .ratioLine{height:7px;border-radius:99px;background:#dfe8f4;overflow:hidden;margin-top:8px}
+  .ratioFill{height:100%;background:linear-gradient(90deg,#4a9cf8,#1769e0);width:0%}
+  .rule{margin-top:14px;padding:11px 12px;border-left:3px solid var(--orange);background:#fff8f2;font-size:11.5px;line-height:1.45;color:#5d4c3f}
+  .rule b{color:#a44913}
+
+  .workspace{min-width:0;display:flex;flex-direction:column;gap:14px}
+  .visualGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .visualCard{overflow:hidden;min-width:0}
+  .cardhead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #e7edf4}
+  .cardhead h3{font-size:14px;margin:0}
+  .cardhead span{font-size:10.5px;color:#708096}
+  .canvasWrap{height:480px;position:relative;background:#f9fbfe}
+  svg{display:block;width:100%;height:100%}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;padding:9px 13px;border-top:1px solid #e8edf3;background:#fbfcfe;font-size:10.5px;color:#5d6e84}
+  .legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+
+  .info{padding:15px 17px}
+  .equationRow{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:12px}
+  .eqCard{border:1px solid #e2e8f0;border-radius:12px;padding:12px 13px;background:#fcfdff}
+  .eqCard h4{font-size:12px;margin:0 0 7px;color:#33455f}
+  .math{font:700 18px Georgia,"Times New Roman",serif;color:#1a2c45;line-height:1.55}
+  .explain{font-size:11.5px;line-height:1.5;color:#66758a}
+  .sensitivity{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .sense{border:1px solid #e1e8f1;border-radius:10px;padding:10px;background:#fff}
+  .sense strong{display:block;font-size:12px;margin-bottom:4px}
+  .sense span{font-size:10.5px;color:#6b7a8f;line-height:1.4}
+  .up{color:#0c7b55}.down{color:#b54a21}
+  .derivation{display:none}
+  .derivation.show{display:block}
+  .derivCanvas{display:grid;grid-template-columns:minmax(300px,.9fr) 1.1fr;gap:16px;align-items:center}
+  .steps{counter-reset:step;display:flex;flex-direction:column;gap:10px}
+  .step{position:relative;padding:10px 12px 10px 42px;border:1px solid #e1e8f0;border-radius:10px;background:#fff}
+  .step:before{counter-increment:step;content:counter(step);position:absolute;left:11px;top:10px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#17385f;color:white;font-size:11px;font-weight:800}
+  .step .math{font-size:16px}
+  .step p{margin:4px 0 0;font-size:11px;color:#65758c;line-height:1.4}
+  .note{margin-top:10px;font-size:10.5px;color:#6f8096}
+
+  .only2d .visualCard.threeD,.only3d .visualCard.twoD{display:none}
+  .only2d .visualGrid,.only3d .visualGrid{grid-template-columns:1fr}
+  .only2d .canvasWrap,.only3d .canvasWrap{height:560px}
+  .deriveMode .visualGrid,.deriveMode .info.summary{display:none}
+  .deriveMode .derivation{display:block}
+
+  .tooltip{position:absolute;pointer-events:none;background:#10243f;color:white;padding:6px 8px;border-radius:7px;font-size:10px;opacity:0;transform:translate(-50%,-120%);transition:opacity .12s;white-space:nowrap;z-index:5}
+
+  @media(max-width:1050px){
+    main{grid-template-columns:1fr}.controls{position:static}.visualGrid{grid-template-columns:1fr}.canvasWrap{height:430px}.equationRow{grid-template-columns:1fr}.sensitivity{grid-template-columns:1fr}.preset{margin-left:0}.derivCanvas{grid-template-columns:1fr}
+  }
+  @media(max-width:650px){
+    header{padding:15px 14px}.headrow{flex-direction:column}.formulaHero{align-self:flex-start}.toolbar,main{padding-left:10px;padding-right:10px}.canvasWrap{height:360px}.only2d .canvasWrap,.only3d .canvasWrap{height:420px}.tabs{width:100%;overflow:auto}.tab{white-space:nowrap}.controls{padding:13px}h1{font-size:22px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="headrow">
+    <div>
+      <h1>Relief Displacement Lab</h1>
+      <div class="sub">Vertical objects on a vertical aerial photograph appear to lean radially away from the principal point. Explore the geometry in a 2D photo and a linked 3D central-projection scene.</div>
+    </div>
+    <div class="formulaHero"><span class="eq">d = hr / H</span><small>vertical photo · level ground</small></div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="tabs" role="tablist" aria-label="Visualization mode">
+    <button class="tab active" data-mode="split">Side-by-side</button>
+    <button class="tab" data-mode="2d">2D aerial photo</button>
+    <button class="tab" data-mode="3d">3D scene</button>
+    <button class="tab" data-mode="derive">Derivation</button>
+  </div>
+  <div class="preset">
+    <button data-preset="near">Near center</button>
+    <button data-preset="tall">Tall + near edge</button>
+    <button data-preset="high">Higher flight</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<main>
+  <aside class="panel controls">
+    <h2>Geometry controls</h2>
+    <div class="ctrl">
+      <div class="labelrow"><label for="h">Object height, h</label><span class="value" id="hVal">120 m</span></div>
+      <input id="h" type="range" min="10" max="400" step="5" value="120" />
+      <div class="rangeEnds"><span>10 m</span><span>400 m</span></div>
+      <div class="hint">True vertical height above local ground.</div>
+    </div>
+    <div class="ctrl">
+      <div class="labelrow"><label for="r">Radial distance, r</label><span class="value" id="rVal">65 mm</span></div>
+      <input id="r" type="range" min="5" max="300" step="1" value="65" />
+      <div class="rangeEnds"><span>5 mm</span><span>300 mm</span></div>
+      <div class="hint">Define <b>r</b> as the radial distance from the principal point P to the displaced <b>top image</b> T. This is the same r used in <b>d = hr/H</b>. Drag this slider to reposition the object; then changing h or H keeps its real-world ground position fixed and updates the image geometry automatically.</div>
+    </div>
+    <div class="ctrl">
+      <div class="labelrow"><label for="dir">Object direction (azimuth)</label><span class="value" id="dirVal">332°</span></div>
+      <input id="dir" type="range" min="0" max="359" step="1" value="332" />
+      <div class="rangeEnds"><span>0° = N</span><span>359°</span></div>
+      <div class="hint">Azimuth of the radial line from the principal point to the object image on the 2D photo: <b>0° = north</b>, <b>90° = east</b>, <b>180° = south</b>, <b>270° = west</b>. Relief displacement remains radial, so the top image moves outward along this direction.</div>
+    </div>
+    <div class="ctrl">
+      <div class="labelrow"><label for="H">Flight height, H</label><span class="value" id="HVal">1500 m</span></div>
+      <input id="H" type="range" min="600" max="5000" step="50" value="1500" />
+      <div class="rangeEnds"><span>600 m</span><span>5000 m</span></div>
+      <div class="hint">Camera height above the same ground datum.</div>
+    </div>
+    <div class="resultBox">
+      <div class="mini">RELIEF DISPLACEMENT</div>
+      <div class="big" id="dBig">5.20 mm</div>
+      <div class="mini" id="subResult">base-image radius (P→B) = 59.80 mm</div>
+      <div class="ratioLine"><div class="ratioFill" id="ratioFill"></div></div>
+      <div class="mini" id="ratioText" style="margin-top:5px">h/H = 8.0% → d/r = 8.0%</div>
+    </div>
+    <div class="rule"><b>Direction:</b> for an object above the reference ground, its top is displaced <b>radially outward</b>, away from the principal point.</div>
+  </aside>
+
+  <section class="workspace" id="workspace">
+    <div class="visualGrid">
+      <article class="panel visualCard twoD">
+        <div class="cardhead"><h3>2D vertical aerial photo</h3><span>plan view · image coordinates</span></div>
+        <div class="canvasWrap"><svg id="photoSvg" viewBox="0 0 720 500" aria-label="2D aerial photo relief displacement diagram"></svg></div>
+        <div class="legend"><span><i style="background:#1769e0"></i>r: principal point → displaced top image</span><span><i style="background:#e86822"></i>d: base image → displaced top image</span></div>
+      </article>
+
+      <article class="panel visualCard threeD">
+        <div class="cardhead"><h3>3D central-projection scene</h3><span>schematic · geometry linked to photo</span></div>
+        <div class="canvasWrap"><svg id="sceneSvg" viewBox="0 0 720 500" aria-label="3D central projection relief displacement scene"></svg></div>
+        <div class="legend"><span><i style="background:#7447d6"></i>ray to object top</span><span><i style="background:#14875d"></i>ray to object base</span><span><i style="background:#c83737"></i>vertical object</span></div>
+      </article>
+    </div>
+
+    <article class="panel info summary">
+      <h2>What the equation is saying</h2>
+      <div class="equationRow">
+        <div class="eqCard"><h4>Live calculation</h4><div class="math" id="liveEq">d = [(120 m)(65.00 mm)] / (1500 m) = 5.20 mm</div><div class="explain">Every value is shown with a unit so students can do dimensional analysis directly: <b>(m × mm) / m = mm</b>. Use the same units for h and H. Then d has the same photo unit as r. Here <b>r = P→T</b>, the radial distance to the top image.</div></div>
+        <div class="eqCard"><h4>Image interpretation</h4><div class="math" id="imageEq">P→B = r − d = 59.80 mm</div><div class="explain"><b>Consistent notation:</b> r means principal point to top image, and d means relief displacement from base image to top image. So the base-image radius is simply <b>r − d</b>.</div></div>
+        <div class="eqCard"><h4>3D ground position</h4><div class="math" id="groundEq">R ≈ 590.1 m</div><div class="explain">R is the true ground radial distance from nadir to the object base. It is held fixed when h or H changes, while the photo distances r and d respond through central projection.</div></div>
+      </div>
+      <div class="sensitivity">
+        <div class="sense"><strong class="up">↑ h → ↑ d</strong><span>At fixed ground position R and H, the base image stays fixed while the top moves outward.</span></div>
+        <div class="sense"><strong class="up">↑ r → ↑ d</strong><span>Moving the object farther from the nadir places its image farther from P and increases relief displacement. Changing direction only rotates the radial line; it does not change the size of d.</span></div>
+        <div class="sense"><strong class="down">↑ H → inward</strong><span>At fixed R, both base and top images move toward P, and their separation d becomes smaller.</span></div>
+      </div>
+    </article>
+
+    <article class="panel info derivation">
+      <h2>Detailed derivation of relief displacement</h2>
+      <div class="derivCanvas">
+        <svg id="deriveSvg" viewBox="0 0 520 390" style="min-height:330px" aria-label="Similar triangle derivation"></svg>
+        <div class="steps">
+          <div class="step"><div class="math">Symbols: r = P→T, d = B→T, P→B = r − d</div><p><b>Notation first, so nothing is ambiguous:</b> <b>r</b> is the radial distance from principal point <b>P</b> to the <b>top image T</b>. <b>d</b> is the <b>relief displacement</b>, the distance from the base image <b>B</b> to the top image <b>T</b>. Therefore the base-image radius is <b>P→B = r − d</b>. In the 3D scene, <b>R</b> is the true ground radial distance from nadir to the object base.</p></div>
+          <div class="step"><div class="math">(P→B)/f = R/H &nbsp;⇒&nbsp; P→B = fR/H</div><p>Look at the triangle made by the camera center, the photo plane, and the <b>object base</b>. Because the photograph is a central projection, the small image triangle and the large ground triangle are similar. So the image distance to the base is proportional to the ground distance <b>R</b>, with scale factor <b>f/H</b>.</p></div>
+          <div class="step"><div class="math">r/f = R/(H − h) &nbsp;⇒&nbsp; r = fR/(H − h)</div><p>Now use the triangle for the <b>object top</b>. The top is closer to the camera by height <b>h</b>, so the relevant distance is <b>H − h</b> rather than <b>H</b>. Because of that, the top image plots farther from the principal point than the base image does.</p></div>
+          <div class="step"><div class="math">d = r − (P→B) = fR/(H − h) − fR/H</div><p>By definition, relief displacement is the separation between the top image and the base image on the photograph. So subtract the base-image radius from the top-image radius.</p></div>
+          <div class="step"><div class="math">d = fR[(1/(H − h)) − (1/H)] = fRh / [H(H − h)]</div><p>Combine the two fractions. Up to this point the formula is written in terms of <b>f</b> and <b>R</b>, which come from the central-projection geometry.</p></div>
+          <div class="step"><div class="math">r = fR/(H − h) &nbsp;⇒&nbsp; fR = r(H − h)</div><p>This is the key substitution. Since we defined <b>r</b> as the top-image radial distance, we can solve the previous top-image equation for <b>fR</b>.</p></div>
+          <div class="step"><div class="math">d = [r(H − h)]h / [H(H − h)] = hr/H</div><p>Substitute <b>fR = r(H − h)</b> into the previous expression. The factor <b>(H − h)</b> cancels, leaving the standard photogrammetry result <b>d = hr/H</b>.</p></div>
+          <div class="step"><div class="math">Final: d = hr/H, and P→B = r − d</div><p><b>Interpretation:</b> if <b>h</b> increases, relief displacement increases. If <b>r</b> increases, displacement also increases. If <b>H</b> increases, displacement decreases. And once you know <b>r</b> and <b>d</b>, the base-image radius is just <b>r − d</b>.</p></div>
+        </div>
+      </div>
+      <div class="note"><b>Why are there equations on this page?</b> Because the picture alone shows the effect, but the equations explain <b>why</b> the effect happens. They connect the 2D photo panel and the 3D central-projection scene through similar triangles. Also, to be explicit: <b>d</b> is the relief displacement, <b>not r</b>. The symbol <b>r</b> is the radial distance from the principal point to the top image.</div>
+    </article>
+
+  </section>
+</main>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  const initial = {h:120,r:65,H:1500,f:152,dir:332};
+  const initialR = initial.r * (initial.H-initial.h) / initial.f;
+  const state = {h:initial.h,r:initial.r,H:initial.H,f:initial.f,dir:initial.dir,R:initialR,mode:'split'};
+  const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+  const fmt = (v,n=1)=>Number(v).toFixed(n);
+
+  const sliders = {h:$('#h'),r:$('#r'),dir:$('#dir'),H:$('#H')};
+  sliders.h.addEventListener('input',()=>{state.h=+sliders.h.value; enforce(); render();});
+  sliders.dir.addEventListener('input',()=>{state.dir=+sliders.dir.value; render();});
+  sliders.H.addEventListener('input',()=>{state.H=+sliders.H.value; enforce(); render();});
+  sliders.r.addEventListener('input',()=>{
+    state.r=+sliders.r.value;
+    enforce();
+    // Reposition the real-world object so its current displaced top image has radius r.
+    state.R = state.r * (state.H-state.h) / state.f;
+    render();
+  });
+
+  function enforce(){
+    if(state.h > state.H*0.65){ state.h = Math.floor(state.H*0.65/5)*5; sliders.h.value=state.h; }
+  }
+
+  function calc(){
+    // Exact central projection for a vertical object on level ground.
+    // Ground point and object top share horizontal ground distance R from nadir.
+    const rBase = state.f * state.R / state.H;
+    const rTop = state.f * state.R / (state.H-state.h);
+    const d = rTop-rBase;
+    state.r = rTop; // r in d = hr/H is the displaced top-image radius.
+    return {d,rBase,rTop,R:state.R,ratio:state.h/state.H};
+  }
+
+  function setMode(mode){
+    state.mode=mode;
+    const w=$('#workspace');
+    w.classList.remove('only2d','only3d','deriveMode');
+    if(mode==='2d') w.classList.add('only2d');
+    if(mode==='3d') w.classList.add('only3d');
+    if(mode==='derive') w.classList.add('deriveMode');
+    $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+  }
+  $$('.tab').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+
+  const presets={
+    near:{h:80,r:22,H:1500,dir:332},
+    tall:{h:280,r:92,H:1200,dir:332},
+    high:{h:120,H:3500,R:initialR,dir:332},
+    reset:{h:initial.h,r:initial.r,H:initial.H,R:initialR,dir:initial.dir}
+  };
+  $$('[data-preset]').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.preset)));
+  $('#resetBtn').addEventListener('click',()=>applyPreset('reset'));
+  function applyPreset(name){
+    const p=presets[name];
+    state.h=p.h; state.H=p.H;
+    if(p.dir!=null) state.dir=p.dir;
+    if(p.R!=null) state.R=p.R;
+    else state.R=p.r*(p.H-p.h)/state.f;
+    enforce(); render();
+  }
+
+  function render(){
+    const c=calc();
+    $('#hVal').textContent=`${state.h} m`;
+    $('#rVal').textContent=`${fmt(c.rTop,1)} mm`;
+    $('#dirVal').textContent=`${state.dir}°`;
+    $('#HVal').textContent=`${state.H} m`;
+    sliders.h.value=state.h; sliders.H.value=state.H; sliders.dir.value=state.dir; sliders.r.value=Math.max(+sliders.r.min,Math.min(+sliders.r.max,c.rTop));
+    $('#dBig').textContent=`${fmt(c.d,2)} mm`;
+    $('#subResult').textContent=`base-image radius (P→B) = ${fmt(c.rBase,2)} mm`;
+    $('#ratioFill').style.width=`${Math.min(100,c.ratio*100)}%`;
+    $('#ratioText').textContent=`h/H = ${fmt(c.ratio*100,1)}% → d/r = ${fmt((c.d/c.rTop)*100,1)}%`;
+    $('#liveEq').innerHTML=`d = [(${state.h} m)(${fmt(c.rTop,2)} mm)] / (${state.H} m) = <b>${fmt(c.d,2)} mm</b>`;
+    $('#imageEq').innerHTML=`P→B = r − d = ${fmt(c.rTop,2)} − ${fmt(c.d,2)} = <b>${fmt(c.rBase,2)} mm</b>`;
+    $('#groundEq').innerHTML=`R ≈ <b>${fmt(c.R,1)} m</b> (fixed)`;
+    drawPhoto(c); drawScene(c); drawDerivation(c);
+  }
+
+  function drawPhoto(c){
+    const svg=$('#photoSvg');
+    const W=720,H=500,cx=360,cy=250;
+    // Use one fixed photo scale for the entire r-slider range.
+    // Do NOT auto-fit to the current r: auto-fit would make large-r points appear frozen.
+    const rSliderMax=+sliders.r.max;
+    const scale=0.86; // px per mm; 300 mm -> 258 px, safely inside the photo frame
+    const ang=(state.dir-90)*Math.PI/180;
+    const rb=c.rBase*scale;
+    const rt=c.rTop*scale;
+    const tx=cx+rt*Math.cos(ang), ty=cy+rt*Math.sin(ang);
+    const bx=cx+rb*Math.cos(ang), by=cy+rb*Math.sin(ang);
+    const dpx=Math.max(2,c.d*scale);
+    const roofSize=Math.max(12,Math.min(28,12+state.h/25));
+    const road=`<path d="M100 415 C220 365 310 380 420 310 S590 220 650 170" stroke="#d6c7a1" stroke-width="34" fill="none" opacity=".82"/><path d="M100 415 C220 365 310 380 420 310 S590 220 650 170" stroke="#f4e7c4" stroke-width="25" fill="none" opacity=".95"/><path d="M160 95 C270 155 330 140 420 105 S580 75 650 120" stroke="#dad1b4" stroke-width="26" fill="none"/><path d="M160 95 C270 155 330 140 420 105 S580 75 650 120" stroke="#f0e9d5" stroke-width="18" fill="none"/>`;
+    const blocks=[];
+    for(let y=70;y<440;y+=72){for(let x=90;x<660;x+=88){const j=((x+y)%3)*4;blocks.push(`<rect x="${x+j}" y="${y}" width="48" height="34" rx="3" fill="${(x+y)%144===0?'#c8d5b2':'#cbd3c2'}" opacity=".75" transform="rotate(${((x+y)%10)-5} ${x+24} ${y+17})"/>`);}}
+    const radialLabelX=(cx+tx)/2+10, radialLabelY=(cy+ty)/2-7;
+    const dx=(tx-bx),dy=(ty-by),len=Math.hypot(dx,dy)||1, nx=-dy/len,ny=dx/len;
+    const off=15;
+    const b1x=bx+nx*off,b1y=by+ny*off,t1x=tx+nx*off,t1y=ty+ny*off;
+    svg.innerHTML=`
+      <defs>
+        <pattern id="fields" width="80" height="80" patternUnits="userSpaceOnUse"><rect width="80" height="80" fill="#dfe8d5"/><path d="M0 20H80M0 40H80M0 60H80" stroke="#cbd9c1" stroke-width="1"/></pattern>
+        <marker id="arrBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#1769e0"/></marker>
+        <marker id="arrOrange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#e86822"/></marker>
+        <filter id="soft"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".2"/></filter>
+      </defs>
+      <rect x="55" y="35" width="610" height="430" rx="9" fill="url(#fields)" stroke="#bac7d5" stroke-width="2"/>
+      ${road}${blocks.join('')}
+      <rect x="55" y="35" width="610" height="430" rx="9" fill="none" stroke="#8799ad" stroke-width="2"/>
+      <g opacity=".9"><line x1="${cx-12}" y1="${cy}" x2="${cx+12}" y2="${cy}" stroke="#263b58" stroke-width="2"/><line x1="${cx}" y1="${cy-12}" x2="${cx}" y2="${cy+12}" stroke="#263b58" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="4" fill="#fff" stroke="#263b58" stroke-width="2"/><text x="${cx+14}" y="${cy+18}" font-size="12" font-weight="700" fill="#263b58">P</text><text x="${cx+14}" y="${cy+32}" font-size="10" fill="#60728a">principal point</text></g>
+      <line x1="${cx}" y1="${cy}" x2="${tx}" y2="${ty}" stroke="#1769e0" stroke-width="2.5" marker-end="url(#arrBlue)"/>
+      <text x="${(cx+tx)/2+10}" y="${(cy+ty)/2-7}" font-size="13" font-weight="800" fill="#1769e0">r = ${fmt(c.rTop,1)} mm</text>
+      <line x1="${bx}" y1="${by}" x2="${tx}" y2="${ty}" stroke="#e86822" stroke-width="7" opacity=".16"/>
+      <line x1="${b1x}" y1="${b1y}" x2="${t1x}" y2="${t1y}" stroke="#e86822" stroke-width="2.5" marker-end="url(#arrOrange)"/>
+      <line x1="${bx}" y1="${by}" x2="${b1x+nx*3}" y2="${b1y+ny*3}" stroke="#e86822" stroke-width="1.5"/><line x1="${tx}" y1="${ty}" x2="${t1x+nx*3}" y2="${t1y+ny*3}" stroke="#e86822" stroke-width="1.5"/>
+      <text x="${(b1x+t1x)/2+nx*8}" y="${(b1y+t1y)/2+ny*8}" font-size="13" font-weight="800" fill="#c95516">d = ${fmt(c.d,2)} mm</text>
+      <g filter="url(#soft)"><rect x="${bx-roofSize/2}" y="${by-roofSize/2}" width="${roofSize}" height="${roofSize}" rx="3" fill="#536b80" opacity=".82" transform="rotate(${state.dir} ${bx} ${by})"/><rect x="${tx-roofSize/2}" y="${ty-roofSize/2}" width="${roofSize}" height="${roofSize}" rx="3" fill="#d73f3f" stroke="#8e1f1f" stroke-width="2" transform="rotate(${state.dir} ${tx} ${ty})"/></g>
+      <line x1="${bx}" y1="${by}" x2="${tx}" y2="${ty}" stroke="#a92727" stroke-width="2" stroke-dasharray="4 4"/>
+      <circle cx="${bx}" cy="${by}" r="5" fill="#fff" stroke="#14875d" stroke-width="3"/><circle cx="${tx}" cy="${ty}" r="5" fill="#fff" stroke="#c83737" stroke-width="3"/>
+      <text x="${bx-10}" y="${by+30}" font-size="11" font-weight="700" fill="#14875d">B: base image</text>
+      <text x="${tx+12}" y="${ty-10}" font-size="11" font-weight="700" fill="#b42f2f">T: top image</text>
+      <g transform="translate(72 55)"><rect width="178" height="65" rx="8" fill="#fff" opacity=".93" stroke="#d2dae4"/><text x="11" y="19" font-size="10" font-weight="800" fill="#4b5d74">RADIAL RELIEF DISPLACEMENT</text><text x="11" y="38" font-size="11" fill="#61748c">Relief shifts T outward from B</text><text x="11" y="50" font-size="10" fill="#61748c">Azimuth = ${state.dir}°</text></g>
+    `;
+  }
+
+  function drawScene(c){
+    const svg=$('#sceneSvg');
+    // 3D-style schematic: ground and object are shown in perspective. The image-plane result
+    // is kept in a linked inset so we do not imply that the dramatically exaggerated vertical
+    // scale is a metrically scaled camera cross-section.
+    const Hn=(state.H-600)/(5000-600);
+    const C={x:155,y:112-Hn*70};
+    const groundY=406;
+    // Compressed but strictly monotonic ground-distance display. Unlike the old clamp,
+    // this never freezes as R increases, while a fixed R remains fixed when h or H changes.
+    const maxGroundR=(+sliders.r.max)*((+sliders.H.max)-(+sliders.h.min))/state.f;
+    const groundFrac=Math.log1p(Math.max(0,state.R)/250)/Math.log1p(maxGroundR/250);
+    const bx=300 + Math.max(0,Math.min(1,groundFrac))*260;
+    const hPx=58 + (state.h/400)*150;
+    const top={x:bx,y:groundY-hPx};
+    const base={x:bx,y:groundY};
+    const nadir={x:C.x,y:groundY};
+    const grid=[];
+    for(let i=0;i<9;i++){const x=70+i*66;grid.push(`<line x1="${x}" y1="${groundY}" x2="${x+108}" y2="${groundY-58}" stroke="#cdd8e4" stroke-width="1"/>`)}
+    for(let i=0;i<6;i++){const y=groundY-i*11;grid.push(`<line x1="70" y1="${y}" x2="645" y2="${y-39}" stroke="#d5dee8" stroke-width="1"/>`)}
+
+    // Linked photo inset uses the exact requested relationship.
+    const inset={x:395,y:55,w:270,h:112};
+    const pX=inset.x+34, axisY=inset.y+67;
+    // Fixed inset scale across the full r range, so the image points keep moving
+    // as r increases instead of being held in place by automatic re-scaling.
+    const maxVis=190;
+    const rSliderMax=+sliders.r.max;
+    const bVis=Math.max(3,c.rBase/rSliderMax*maxVis);
+    const tVis=Math.max(3,c.rTop/rSliderMax*maxVis);
+    const bX=pX+bVis, tX=pX+tVis;
+
+    svg.innerHTML=`
+      <defs>
+        <marker id="arrBlue3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#1769e0"/></marker>
+        <marker id="arrOrange3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#e86822"/></marker>
+      </defs>
+      <rect width="720" height="500" fill="#f8fbff"/>
+      <polygon points="62,${groundY} 595,${groundY} 672,${groundY-43} 139,${groundY-43}" fill="#edf3ea" stroke="#c6d2c3"/>
+      ${grid.join('')}
+      <line x1="62" y1="${groundY}" x2="595" y2="${groundY}" stroke="#82927f" stroke-width="2"/>
+
+      <line x1="${C.x}" y1="${C.y}" x2="${nadir.x}" y2="${nadir.y}" stroke="#8090a5" stroke-width="1.5" stroke-dasharray="6 5"/>
+      <text x="${C.x+9}" y="${(C.y+groundY)/2}" font-size="12" font-weight="800" fill="#607087">H = ${state.H} m</text>
+      <g transform="translate(${C.x-24} ${C.y-23})"><path d="M5 20 L22 7 L39 20 L33 20 L33 34 L11 34 L11 20Z" fill="#203854"/><circle cx="22" cy="20" r="6" fill="#a9cfff" stroke="#fff" stroke-width="2"/></g>
+      <circle cx="${C.x}" cy="${C.y}" r="5" fill="#172f4e"/><text x="${C.x+11}" y="${C.y-8}" font-size="11" font-weight="800" fill="#263b58">Camera center C</text>
+
+      <line x1="${C.x}" y1="${C.y}" x2="${base.x}" y2="${base.y}" stroke="#14875d" stroke-width="2.5" opacity=".92"/>
+      <line x1="${C.x}" y1="${C.y}" x2="${top.x}" y2="${top.y}" stroke="#7447d6" stroke-width="2.5" opacity=".96"/>
+      <line x1="${base.x}" y1="${base.y}" x2="${top.x}" y2="${top.y}" stroke="#c83737" stroke-width="10"/>
+      <rect x="${base.x-22}" y="${top.y-8}" width="44" height="16" rx="3" fill="#d55454" stroke="#912b2b"/>
+      <circle cx="${base.x}" cy="${base.y}" r="5" fill="#14875d"/><circle cx="${top.x}" cy="${top.y}" r="5" fill="#7447d6"/>
+      <text x="${base.x+15}" y="${(base.y+top.y)/2}" font-size="12" font-weight="800" fill="#b52d2d">h = ${state.h} m</text>
+      <text x="${base.x-12}" y="${groundY+22}" font-size="10" fill="#52657c">object base</text>
+      <circle cx="${nadir.x}" cy="${nadir.y}" r="4" fill="#304760"/><text x="${nadir.x-24}" y="${nadir.y+21}" font-size="10" fill="#52657c">nadir</text>
+      <line x1="${nadir.x}" y1="${groundY+35}" x2="${base.x}" y2="${groundY+35}" stroke="#526b84" stroke-width="1.5"/><line x1="${nadir.x}" y1="${groundY+29}" x2="${nadir.x}" y2="${groundY+41}" stroke="#526b84"/><line x1="${base.x}" y1="${groundY+29}" x2="${base.x}" y2="${groundY+41}" stroke="#526b84"/><text x="${(nadir.x+base.x)/2-42}" y="${groundY+54}" font-size="11" font-weight="700" fill="#526b84">R ≈ ${fmt(c.R,1)} m</text>
+
+      <g>
+        <rect x="${inset.x}" y="${inset.y}" width="${inset.w}" height="${inset.h}" rx="10" fill="#fff" stroke="#d5dfea"/>
+        <text x="${inset.x+12}" y="${inset.y+19}" font-size="10" font-weight="800" fill="#465a72">LINKED VERTICAL-PHOTO RESULT</text>
+        <line x1="${pX}" y1="${axisY}" x2="${inset.x+inset.w-18}" y2="${axisY}" stroke="#b6c2d1" stroke-width="1"/>
+        <line x1="${pX}" y1="${axisY-9}" x2="${pX}" y2="${axisY+9}" stroke="#26384f" stroke-width="2"/><circle cx="${pX}" cy="${axisY}" r="3.5" fill="#fff" stroke="#26384f" stroke-width="2"/>
+        <text x="${pX-3}" y="${axisY+24}" font-size="9" font-weight="800" fill="#26384f">P</text>
+        <circle cx="${bX}" cy="${axisY}" r="5" fill="#fff" stroke="#14875d" stroke-width="3"/><circle cx="${tX}" cy="${axisY}" r="5" fill="#fff" stroke="#c83737" stroke-width="3"/>
+        <line x1="${pX}" y1="${axisY-18}" x2="${tX}" y2="${axisY-18}" stroke="#1769e0" stroke-width="2" marker-end="url(#arrBlue3)"/>
+        <text x="${(pX+tX)/2-26}" y="${axisY-25}" font-size="10" font-weight="800" fill="#1769e0">r = ${fmt(c.rTop,1)} mm</text>
+        <line x1="${bX}" y1="${axisY+18}" x2="${tX}" y2="${axisY+18}" stroke="#e86822" stroke-width="2" marker-end="url(#arrOrange3)"/>
+        <text x="${(bX+tX)/2-30}" y="${axisY+35}" font-size="10" font-weight="800" fill="#c95516">d = ${fmt(c.d,2)} mm</text>
+      </g>
+
+      <g transform="translate(70 92)"><rect width="250" height="67" rx="8" fill="#fff" opacity=".94" stroke="#d8e1ec"/><text x="11" y="19" font-size="10" font-weight="800" fill="#465a72">3D INTERPRETATION</text><text x="11" y="37" font-size="10.5" fill="#68798f">Ground position R stays fixed.</text><text x="11" y="51" font-size="10.5" fill="#68798f">↑h moves only the top image outward;</text><text x="11" y="64" font-size="10.5" fill="#68798f">↑H moves both image points inward.</text></g>
+      <text x="70" y="485" font-size="9.5" fill="#8997aa">Scene dimensions are visually exaggerated; numeric labels and the linked photo inset carry the metric relationship.</text>
+    `;
+  }
+
+  function drawDerivation(c){
+    const svg=$('#deriveSvg');
+    const C={x:95,y:42}, gy=334, bx=418, topY=176, planeY=112;
+    function xAtY(P,y){ const t=(y-C.y)/(P.y-C.y); return C.x+t*(P.x-C.x); }
+    const bInt=xAtY({x:bx,y:gy},planeY);
+    const tInt=xAtY({x:bx,y:topY},planeY);
+    svg.innerHTML=`
+      <rect width="520" height="390" fill="#fbfdff"/>
+      <line x1="62" y1="${gy}" x2="470" y2="${gy}" stroke="#6f806a" stroke-width="2"/>
+      <line x1="${C.x}" y1="${C.y}" x2="${C.x}" y2="${gy}" stroke="#7b899b" stroke-dasharray="5 5"/>
+      <line x1="${bx}" y1="${gy}" x2="${bx}" y2="${topY}" stroke="#c83737" stroke-width="8"/>
+      <line x1="${C.x}" y1="${C.y}" x2="${bx}" y2="${gy}" stroke="#14875d" stroke-width="2"/>
+      <line x1="${C.x}" y1="${C.y}" x2="${bx}" y2="${topY}" stroke="#7447d6" stroke-width="2"/>
+      <line x1="${C.x-15}" y1="${planeY}" x2="${C.x+205}" y2="${planeY}" stroke="#26384f" stroke-width="4"/>
+      <circle cx="${C.x}" cy="${planeY}" r="4" fill="#26384f"/><circle cx="${bInt}" cy="${planeY}" r="5" fill="#14875d"/><circle cx="${tInt}" cy="${planeY}" r="5" fill="#c83737"/>
+      <line x1="${C.x}" y1="${planeY-18}" x2="${tInt}" y2="${planeY-18}" stroke="#1769e0" stroke-width="2"/>
+      <line x1="${bInt}" y1="${planeY+19}" x2="${tInt}" y2="${planeY+19}" stroke="#e86822" stroke-width="2"/>
+      <line x1="${C.x}" y1="${planeY-23}" x2="${C.x}" y2="${planeY-13}" stroke="#1769e0"/><line x1="${tInt}" y1="${planeY-23}" x2="${tInt}" y2="${planeY-13}" stroke="#1769e0"/>
+      <line x1="${bInt}" y1="${planeY+14}" x2="${bInt}" y2="${planeY+24}" stroke="#e86822"/><line x1="${tInt}" y1="${planeY+14}" x2="${tInt}" y2="${planeY+24}" stroke="#e86822"/>
+      <text x="${(C.x+tInt)/2-4}" y="${planeY-27}" font-size="12" font-weight="800" fill="#1769e0">r</text>
+      <text x="${(bInt+tInt)/2-4}" y="${planeY+38}" font-size="12" font-weight="800" fill="#c95516">d</text>
+      <text x="${C.x-32}" y="${(C.y+gy)/2}" font-size="12" font-weight="800" fill="#5d6d82">H</text>
+      <text x="${bx+12}" y="${(topY+gy)/2}" font-size="12" font-weight="800" fill="#b52d2d">h</text>
+      <text x="${(C.x+bx)/2}" y="${gy+22}" font-size="12" font-weight="800" fill="#5d6d82">R</text>
+      <text x="${C.x+10}" y="${C.y-7}" font-size="11" font-weight="800" fill="#26384f">C</text>
+      <text x="${C.x-9}" y="${planeY+18}" font-size="10" fill="#53667e">p</text>
+      <text x="${bInt-3}" y="${planeY-9}" font-size="10" fill="#14875d">b</text><text x="${tInt-3}" y="${planeY-9}" font-size="10" fill="#b82f2f">t</text>
+      <text x="68" y="374" font-size="10.5" fill="#6d7d91">Here r runs from principal point p to top image t; d is the relief displacement from base image b to top image t; and p→b = r − d.</text>
+    `;
+  }
+
+
+  render();
+})();
+</script>
+</body>
+</html>

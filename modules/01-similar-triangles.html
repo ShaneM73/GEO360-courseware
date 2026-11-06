@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive beginner lesson about similar triangles, scale factors, and proportional sides.">
+  <title>Similar Triangles Lab</title>
+  <style>
+    :root {
+      --navy: #0a3768;
+      --navy-2: #06294f;
+      --blue: #2188e8;
+      --sky: #eaf7ff;
+      --sky-2: #d8f0ff;
+      --paper: #ffffff;
+      --ink: #102846;
+      --muted: #60758d;
+      --coral: #ff5a51;
+      --teal: #16b7aa;
+      --gold: #f7b714;
+      --line: #b9dbef;
+      --shadow: 0 18px 50px rgba(11, 62, 104, .12);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #eef8fd;
+      font-family: Inter, ui-rounded, "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      line-height: 1.45;
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible {
+      outline: 4px solid rgba(247, 183, 20, .45);
+      outline-offset: 3px;
+    }
+
+    .topbar {
+      min-height: 84px;
+      padding: 16px clamp(20px, 4vw, 64px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      color: white;
+      background: var(--navy);
+    }
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .brand svg { flex: 0 0 auto; }
+    .brand h1 { margin: 0; font-size: clamp(1.65rem, 3vw, 2.4rem); letter-spacing: -.035em; }
+    .progress-control { display: flex; align-items: center; gap: 12px; }
+    .progress-control button {
+      width: 42px; height: 42px; border: 0; border-radius: 50%;
+      background: rgba(255,255,255,.12); color: #fff; cursor: pointer;
+      transition: transform .18s ease, background .18s ease;
+    }
+    .progress-control button:hover { transform: translateY(-2px); background: rgba(255,255,255,.2); }
+    .progress-text {
+      min-width: 72px; padding: 9px 12px; text-align: center; font-weight: 800;
+      border-radius: 10px; background: rgba(1, 30, 63, .42);
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      min-height: calc(100vh - 84px);
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .lesson-rail {
+      padding: 34px 18px;
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, #eaf7ff, #f7fcff);
+    }
+    .steps { position: sticky; top: 20px; display: grid; gap: 18px; }
+    .step-button {
+      position: relative;
+      width: 100%; min-height: 106px; padding: 17px 14px 16px 55px;
+      text-align: left; border: 1px solid #c2ddec; border-radius: 15px;
+      background: rgba(255,255,255,.78); cursor: pointer;
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .step-button:hover { transform: translateX(4px); box-shadow: 0 8px 20px rgba(25, 101, 153, .1); }
+    .step-button[aria-current="step"] { background: #fff2f1; border-color: #ffb7b2; box-shadow: 0 10px 25px rgba(255,90,81,.12); }
+    .step-number {
+      position: absolute; left: -13px; top: 19px; width: 46px; height: 46px;
+      display: grid; place-items: center; color: white; font-size: 1.25rem; font-weight: 900;
+      border-radius: 50%; background: var(--blue); box-shadow: 0 8px 18px rgba(33,136,232,.25);
+    }
+    .step-button[aria-current="step"] .step-number { background: var(--coral); }
+    .step-title { display: block; font-size: 1.12rem; font-weight: 900; margin-bottom: 5px; }
+    .step-copy { display: block; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+
+    main { padding: clamp(18px, 3vw, 34px); min-width: 0; }
+    .workspace {
+      display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(290px, .75fr);
+      border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+      background: var(--paper); box-shadow: var(--shadow);
+    }
+    .diagram-zone {
+      position: relative; min-height: 555px; padding: 24px;
+      background-color: #fff;
+      background-image:
+        linear-gradient(#ddecf5 1px, transparent 1px),
+        linear-gradient(90deg, #ddecf5 1px, transparent 1px);
+      background-size: 28px 28px;
+      border-right: 1px solid var(--line);
+    }
+    .stage-prompt {
+      position: absolute; top: 18px; left: 20px; z-index: 2;
+      max-width: 390px; padding: 10px 14px; border-radius: 10px;
+      background: rgba(255,255,255,.94); color: var(--navy); font-weight: 800;
+      box-shadow: 0 5px 18px rgba(12,61,101,.1);
+    }
+    #triangleSvg { width: 100%; height: 500px; display: block; overflow: visible; }
+    .triangle-side { fill: none; stroke-width: 8; stroke-linecap: round; }
+    .side-red { stroke: var(--coral); }
+    .side-teal { stroke: var(--teal); }
+    .side-gold { stroke: var(--gold); }
+    .point { fill: var(--navy); }
+    .handle-ring { fill: white; stroke: var(--blue); stroke-width: 5; cursor: ns-resize; }
+    .handle-hit { fill: transparent; cursor: ns-resize; }
+    .vertex-label { fill: var(--navy); font-size: 24px; font-weight: 900; font-style: italic; }
+    .side-label { font-size: 21px; font-weight: 900; font-style: italic; paint-order: stroke; stroke: white; stroke-width: 5px; stroke-linejoin: round; }
+    .angle-arc { fill: none; stroke-width: 5; stroke-linecap: round; opacity: .85; }
+    .match-line { fill: none; stroke-width: 3; stroke-dasharray: 8 8; opacity: 0; transition: opacity .3s ease; }
+    .show-matches .match-line { opacity: .75; }
+    .draggable-note { opacity: 1; transition: opacity .2s ease; }
+    .dragging .draggable-note { opacity: 0; }
+
+    .explanation { padding: 28px 26px; background: #fff; }
+    .big-idea {
+      margin: 0 0 28px; padding: 19px; border-radius: 14px;
+      color: var(--navy); background: var(--sky-2); font-size: clamp(1.75rem, 3vw, 2.6rem);
+      line-height: 1.05; letter-spacing: -.04em;
+    }
+    .big-idea::after { content: ""; display: block; width: 82%; height: 5px; margin-top: 13px; border-radius: 4px; background: var(--gold); }
+    .explanation h3 { color: var(--navy); margin: 25px 0 12px; font-size: 1.05rem; }
+    .angle-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .angle-list li { display: flex; align-items: center; gap: 12px; font-size: 1.2rem; font-weight: 800; }
+    .swatch { width: 30px; height: 9px; border-radius: 10px; flex: 0 0 auto; }
+    .rule-box {
+      margin-top: 24px; padding: 18px 12px; border: 1px solid #f4d574;
+      border-radius: 14px; background: #fff9df; text-align: center;
+      font-size: clamp(1rem, 1.8vw, 1.25rem); font-weight: 900;
+    }
+    .tip {
+      margin-top: 22px; padding-left: 14px; border-left: 4px solid var(--blue);
+      color: var(--muted); font-size: .94rem;
+    }
+
+    .controls {
+      display: grid; grid-template-columns: auto minmax(240px, 1fr) auto;
+      align-items: center; gap: 22px; margin-top: 18px; padding: 16px 18px;
+      border: 1px solid var(--line); border-radius: 16px; background: white; box-shadow: 0 10px 28px rgba(11,62,104,.07);
+    }
+    .secondary, .primary {
+      min-height: 52px; padding: 0 24px; border-radius: 12px; font-weight: 900; cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .secondary { border: 2px solid var(--navy); background: #fff; color: var(--navy); }
+    .secondary[aria-pressed="true"] { background: var(--navy); color: white; }
+    .primary { border: 0; background: var(--coral); color: white; box-shadow: 0 8px 20px rgba(255,90,81,.24); }
+    .secondary:hover, .primary:hover { transform: translateY(-2px); }
+    .scale-control { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; }
+    .scale-control label { color: var(--navy); font-weight: 900; white-space: nowrap; }
+    .scale-readout { min-width: 58px; color: var(--navy); font-weight: 900; text-align: right; }
+    input[type="range"] { width: 100%; accent-color: var(--blue); cursor: pointer; }
+
+    .practice {
+      margin-top: 20px; display: grid; grid-template-columns: .8fr 1.4fr auto; gap: 28px;
+      align-items: center; padding: 26px 30px; border-radius: 18px; background: var(--sky-2);
+    }
+    .practice h2 { margin: 0; color: var(--navy); font-size: clamp(1.5rem, 3vw, 2.25rem); }
+    .practice p { margin: 5px 0 0; color: var(--muted); }
+    .problem { font-size: 1.02rem; }
+    .problem strong { color: var(--navy); }
+    .answer-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .answer-row label { display: flex; align-items: center; gap: 7px; font-weight: 800; }
+    .answer-row input {
+      width: 86px; padding: 9px 10px; border: 2px solid #9bc7de; border-radius: 9px; background: white;
+    }
+    .feedback { min-height: 24px; margin-top: 10px; font-weight: 800; }
+    .feedback.good { color: #087a6e; }
+    .feedback.try { color: #b0443e; }
+    .check-button { min-height: 48px; padding: 0 20px; border: 2px solid var(--navy); border-radius: 11px; background: white; color: var(--navy); font-weight: 900; cursor: pointer; }
+
+    .theory-lab {
+      margin-top: 24px; overflow: hidden; border: 1px solid var(--line);
+      border-radius: var(--radius); background: white; box-shadow: var(--shadow);
+    }
+    .theory-heading {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 24px;
+      padding: 34px clamp(22px, 4vw, 42px); color: white; background: var(--navy);
+    }
+    .theory-heading h2 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.8rem); letter-spacing: -.035em; }
+    .theory-heading p { max-width: 650px; margin: 8px 0 0; color: #d8edff; }
+    .notation {
+      padding: 11px 16px; border: 1px solid rgba(255,255,255,.35); border-radius: 10px;
+      font-size: 1.15rem; font-weight: 900; white-space: nowrap;
+    }
+    .theory-part { padding: 34px clamp(22px, 4vw, 42px); }
+    .theory-part + .theory-part { border-top: 1px solid var(--line); }
+    .section-intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, .7fr); gap: 30px; margin-bottom: 25px; }
+    .section-intro h3 { margin: 0; color: var(--navy); font-size: clamp(1.4rem, 3vw, 2rem); }
+    .section-intro p { margin: 5px 0 0; color: var(--muted); }
+    .teacher-note { align-self: center; padding: 12px 15px; border-left: 4px solid var(--gold); background: #fff9df; font-weight: 700; }
+    .angle-methods { display: grid; gap: 0; border-top: 1px solid var(--line); }
+    .angle-method {
+      display: grid; grid-template-columns: 110px minmax(150px, .55fr) minmax(0, 1.25fr);
+      align-items: center; gap: 22px; min-height: 132px; padding: 18px 4px; border-bottom: 1px solid var(--line);
+    }
+    .mini-diagram { width: 105px; height: 88px; display: block; }
+    .angle-method h4 { margin: 0 0 5px; color: var(--navy); font-size: 1.08rem; }
+    .angle-method p { margin: 0; color: var(--muted); }
+    .angle-method strong { color: var(--ink); }
+    .proof-route {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 24px;
+      padding: 16px 18px; border-radius: 12px; background: var(--sky);
+    }
+    .proof-route span { padding: 7px 10px; border-radius: 8px; background: white; font-weight: 800; }
+    .proof-route b { color: var(--blue); }
+
+    .rule-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 22px; }
+    .theorem-summary {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: -6px 0 22px;
+    }
+    .theorem-summary div { padding: 14px 16px; border-left: 5px solid var(--blue); background: var(--sky); }
+    .theorem-summary div:nth-child(2) { border-color: var(--coral); }
+    .theorem-summary div:nth-child(3) { border-color: var(--teal); }
+    .theorem-summary strong { display: block; color: var(--navy); font-size: 1.05rem; }
+    .theorem-summary span { color: var(--muted); font-size: .9rem; }
+    .rule-tab {
+      min-height: 62px; padding: 10px 14px; border: 2px solid #b9d8e9; border-radius: 12px;
+      background: white; color: var(--navy); font-weight: 900; cursor: pointer;
+    }
+    .rule-tab small { display: block; margin-top: 2px; color: var(--muted); font-weight: 650; }
+    .rule-tab[aria-selected="true"] { border-color: var(--coral); background: #fff2f1; box-shadow: 0 8px 20px rgba(255,90,81,.1); }
+    .rule-stage {
+      display: grid; grid-template-columns: minmax(240px, .8fr) minmax(0, 1.2fr); gap: 28px;
+      align-items: center; min-height: 285px; padding: 26px; border-radius: 16px; background: var(--sky);
+    }
+    .rule-visual { display: grid; place-items: center; min-height: 225px; border-radius: 13px; background: white; }
+    .rule-visual svg { width: min(100%, 360px); height: 210px; }
+    .rule-copy h4 { margin: 0; color: var(--navy); font-size: clamp(1.45rem, 3vw, 2rem); }
+    .rule-formula { margin: 12px 0; color: var(--coral); font-size: 1.18rem; font-weight: 900; }
+    .rule-copy p { margin: 8px 0; }
+    .warning { padding: 11px 13px; border-left: 4px solid var(--coral); background: #fff2f1; color: #7a3430; }
+
+    .decision-practice {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center;
+      margin-top: 26px; padding: 24px; border: 2px dashed #96c7df; border-radius: 15px;
+    }
+    .decision-practice h4 { margin: 0 0 7px; color: var(--navy); font-size: 1.25rem; }
+    .decision-practice p { margin: 0; }
+    .decision-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+    .decision-button {
+      min-width: 96px; min-height: 48px; border: 2px solid var(--navy); border-radius: 10px;
+      background: white; color: var(--navy); font-weight: 900; cursor: pointer;
+    }
+    .decision-button:hover { background: var(--navy); color: white; }
+    .decision-feedback { min-height: 24px; margin-top: 11px; font-weight: 800; }
+    .decision-feedback.good { color: #087a6e; }
+    .decision-feedback.try { color: #b0443e; }
+    .next-scenario { display: none; margin-top: 10px; border: 0; background: transparent; color: var(--blue); font-weight: 900; cursor: pointer; }
+    .next-scenario.visible { display: inline-block; }
+
+    .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 10; }
+    .confetti i { position: absolute; top: -16px; width: 9px; height: 16px; animation: fall 1.3s ease-in forwards; }
+    @keyframes fall { to { transform: translate3d(var(--drift), 105vh, 0) rotate(720deg); opacity: .3; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+    @media (max-width: 1050px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .lesson-rail { padding: 14px 18px; border-right: 0; border-bottom: 1px solid var(--line); }
+      .steps { position: static; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+      .step-button { min-height: 76px; padding: 12px 9px 10px 45px; }
+      .step-number { left: 7px; top: 14px; width: 34px; height: 34px; font-size: .95rem; }
+      .step-copy { display: none; }
+      .workspace { grid-template-columns: 1fr; }
+      .diagram-zone { border-right: 0; border-bottom: 1px solid var(--line); min-height: 500px; }
+      #triangleSvg { height: 450px; }
+      .explanation { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+      .big-idea { grid-column: 1 / -1; }
+    }
+    @media (max-width: 720px) {
+      .topbar { min-height: 72px; padding: 12px 16px; }
+      .brand svg { width: 45px; }
+      .brand h1 { font-size: 1.45rem; }
+      .progress-control button { display: none; }
+      main { padding: 12px; }
+      .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .step-button { min-height: 58px; padding: 9px 4px; text-align: center; }
+      .step-number { display: none; }
+      .step-title { font-size: .86rem; }
+      .diagram-zone { min-height: 395px; padding: 8px; overflow: hidden; }
+      .stage-prompt { position: relative; top: 0; left: 0; margin: 4px 4px 0; max-width: none; font-size: .85rem; }
+      #triangleSvg { height: 340px; }
+      .explanation { display: block; padding: 20px; }
+      .controls { grid-template-columns: 1fr; gap: 14px; }
+      .secondary, .primary { width: 100%; }
+      .practice { grid-template-columns: 1fr; gap: 14px; padding: 22px; }
+      .check-button { width: 100%; }
+      .theory-heading, .section-intro, .rule-stage, .decision-practice { grid-template-columns: 1fr; }
+      .theory-heading { align-items: start; }
+      .notation { justify-self: start; }
+      .angle-method { grid-template-columns: 86px 1fr; gap: 14px; }
+      .angle-method .mini-diagram { width: 82px; }
+      .angle-method > p { grid-column: 1 / -1; }
+      .rule-tabs { grid-template-columns: 1fr; }
+      .theorem-summary { grid-template-columns: 1fr; }
+      .decision-actions { justify-content: stretch; }
+      .decision-button { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg width="58" height="42" viewBox="0 0 58 42" aria-hidden="true">
+        <path d="M3 37 18 5l17 28Z" fill="none" stroke="#ff5a51" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M27 37 42 12l13 25Z" fill="none" stroke="#16b7aa" stroke-width="4" stroke-linejoin="round"/>
+      </svg>
+      <h1>Similar Triangles</h1>
+    </div>
+    <div class="progress-control" aria-label="Lesson progress">
+      <button id="prevStep" aria-label="Previous step">←</button>
+      <span class="progress-text"><span id="currentStep">1</span> of 4</span>
+      <button id="nextStep" aria-label="Next step">→</button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <aside class="lesson-rail" aria-label="Lesson stages">
+      <nav class="steps">
+        <button class="step-button" data-step="0" aria-current="step">
+          <span class="step-number">1</span><span class="step-title">Notice</span><span class="step-copy">See the same shape at two sizes.</span>
+        </button>
+        <button class="step-button" data-step="1">
+          <span class="step-number">2</span><span class="step-title">Match</span><span class="step-copy">Connect corresponding angles and sides.</span>
+        </button>
+        <button class="step-button" data-step="2">
+          <span class="step-number">3</span><span class="step-title">Scale</span><span class="step-copy">Resize using one scale factor.</span>
+        </button>
+        <button class="step-button" data-step="3">
+          <span class="step-number">4</span><span class="step-title">Solve</span><span class="step-copy">Use a proportion to find unknowns.</span>
+        </button>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="workspace" aria-label="Interactive triangle laboratory">
+        <div class="diagram-zone" id="diagramZone">
+          <div class="stage-prompt" id="stagePrompt">First, look for what stays the same—even when the size changes.</div>
+          <svg id="triangleSvg" viewBox="0 0 860 450" role="img" aria-labelledby="diagramTitle diagramDesc">
+            <title id="diagramTitle">Two similar right triangles</title>
+            <desc id="diagramDesc">Triangle ABC has sides 6, 8, and 10. Triangle DEF is a scaled copy. Drag point D or use the slider to change its scale.</desc>
+            <defs>
+              <marker id="arrowCoral" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#ff5a51"/></marker>
+              <marker id="arrowTeal" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#16b7aa"/></marker>
+              <marker id="arrowGold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#f7b714"/></marker>
+            </defs>
+
+            <g id="correspondence" aria-hidden="true">
+              <path class="match-line" d="M95 143 C250 45, 360 40, 470 90" stroke="#ff5a51" marker-end="url(#arrowCoral)"/>
+              <path class="match-line" d="M96 350 C235 425, 360 430, 470 350" stroke="#16b7aa" marker-end="url(#arrowTeal)"/>
+              <path class="match-line" d="M315 350 C450 425, 670 430, 770 350" stroke="#f7b714" marker-end="url(#arrowGold)"/>
+            </g>
+
+            <g id="smallTriangle">
+              <path class="triangle-side side-red" d="M95 170 L95 350"/>
+              <path class="triangle-side side-teal" d="M95 350 L335 350"/>
+              <path class="triangle-side side-gold" d="M95 170 L335 350"/>
+              <path class="angle-arc" d="M95 200 A30 30 0 0 0 119 188" stroke="#ff5a51"/>
+              <path class="angle-arc" d="M95 322 A28 28 0 0 1 123 350" stroke="#16b7aa"/>
+              <path class="angle-arc" d="M307 350 A28 28 0 0 1 312.6 333.2" stroke="#f7b714"/>
+              <circle class="point" cx="95" cy="170" r="9"/><circle class="point" cx="95" cy="350" r="9"/><circle class="point" cx="335" cy="350" r="9"/>
+              <text class="vertex-label" x="77" y="151">A</text><text class="vertex-label" x="70" y="379">B</text><text class="vertex-label" x="345" y="379">C</text>
+              <text class="side-label" x="67" y="264" fill="#ff5a51">6</text><text class="side-label" x="207" y="378" fill="#16b7aa">8</text><text class="side-label" x="222" y="247" fill="#d99800">10</text>
+            </g>
+
+            <g id="bigTriangle">
+              <path id="sideDE" class="triangle-side side-red"/><path id="sideEF" class="triangle-side side-teal"/><path id="sideDF" class="triangle-side side-gold"/>
+              <path id="arcD" class="angle-arc" stroke="#ff5a51"/><path id="arcE" class="angle-arc" stroke="#16b7aa"/><path id="arcF" class="angle-arc" stroke="#f7b714"/>
+              <circle id="pointE" class="point" r="9"/><circle id="pointF" class="point" r="9"/>
+              <circle id="pointD" class="handle-ring" r="13"/><circle id="pointDHit" class="handle-hit" r="30" tabindex="0" role="slider" aria-label="Scale the second triangle by moving vertex D" aria-valuemin="0.75" aria-valuemax="1.65" aria-valuenow="1.25"/>
+              <text id="labelD" class="vertex-label">D</text><text id="labelE" class="vertex-label">E</text><text id="labelF" class="vertex-label">F</text>
+              <text id="labelDE" class="side-label" fill="#ff5a51"></text><text id="labelEF" class="side-label" fill="#16b7aa"></text><text id="labelDF" class="side-label" fill="#d99800"></text>
+              <g class="draggable-note" aria-hidden="true"><path d="M478 70 C520 56 540 59 558 73" fill="none" stroke="#0a3768" stroke-width="3" marker-end="url(#arrowTeal)"/><text x="566" y="79" fill="#0a3768" font-weight="800">Drag D</text></g>
+            </g>
+          </svg>
+        </div>
+
+        <aside class="explanation" aria-live="polite">
+          <h2 class="big-idea" id="bigIdea">Same shape.<br>Different size.</h2>
+          <div id="explanationBody">
+            <h3>Corresponding angles are equal:</h3>
+            <ul class="angle-list">
+              <li><span class="swatch" style="background:var(--coral)"></span>∠A = ∠D</li>
+              <li><span class="swatch" style="background:var(--teal)"></span>∠B = ∠E</li>
+              <li><span class="swatch" style="background:var(--gold)"></span>∠C = ∠F</li>
+            </ul>
+            <h3>Corresponding sides are proportional:</h3>
+            <div class="rule-box"><span style="color:var(--coral)">AB / DE</span> = <span style="color:var(--teal)">BC / EF</span> = <span style="color:#c98a00">AC / DF</span></div>
+            <p class="tip" id="tipText">“Similar” does not mean “equal.” The triangles may be different sizes.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="controls" aria-label="Triangle controls">
+        <button class="secondary" id="showWhy" aria-pressed="false">Show matches</button>
+        <div class="scale-control">
+          <label for="scaleSlider">Scale factor</label>
+          <input id="scaleSlider" type="range" min="0.75" max="1.65" step="0.05" value="1.25">
+          <output id="scaleReadout" class="scale-readout" for="scaleSlider">1.25×</output>
+        </div>
+        <button class="primary" id="tryIt">Next: Match</button>
+      </section>
+
+      <section class="practice" id="practice" aria-labelledby="practiceTitle">
+        <div><h2 id="practiceTitle">Try one</h2><p>No tricks—just one scale factor.</p></div>
+        <div class="problem">
+          Triangle ABC has sides <strong>6, 8, 10</strong>. A similar triangle has its shortest side equal to <strong>9</strong>.
+          <div class="answer-row">
+            <label>Middle side <input id="middleAnswer" inputmode="decimal" aria-label="Middle side answer"></label>
+            <label>Longest side <input id="longAnswer" inputmode="decimal" aria-label="Longest side answer"></label>
+          </div>
+          <div class="feedback" id="feedback" role="status"></div>
+        </div>
+        <button class="check-button" id="checkAnswer">Check answer</button>
+      </section>
+
+      <section class="theory-lab" aria-labelledby="theoryTitle">
+        <header class="theory-heading">
+          <div>
+            <h2 id="theoryTitle">How do we prove triangles are similar?</h2>
+            <p>First identify corresponding angles and sides. Then use the smallest amount of information that guarantees the same shape.</p>
+          </div>
+          <div class="notation" aria-label="Triangle ABC is similar to triangle DEF">△ABC ∼ △DEF</div>
+        </header>
+
+        <section class="theory-part" aria-labelledby="angleDetectiveTitle">
+          <div class="section-intro">
+            <div><h3 id="angleDetectiveTitle">Part 1: Become an angle detective</h3><p>Use these clues to prove that two angles have equal measures.</p></div>
+            <div class="teacher-note">Say “equal angles” or “congruent angles.” Their positions may differ, but their degree measures are equal.</div>
+          </div>
+
+          <div class="angle-methods">
+            <article class="angle-method">
+              <svg class="mini-diagram" viewBox="0 0 105 88" aria-hidden="true"><path d="M9 76 52 10 97 76Z" fill="none" stroke="#0a3768" stroke-width="4"/><path d="M41.1 26.75 A20 20 0 0 0 63.26 26.64" fill="none" stroke="#ff5a51" stroke-width="5"/><path d="M18.27 61.74 A17 17 0 0 1 26 76M80 76 A17 17 0 0 1 87.43 61.96" fill="none" stroke="#16b7aa" stroke-width="4"/></svg>
+              <div><h4>1. Given markings</h4><p>Matching arcs or matching degree labels mean equal angles.</p></div>
+              <p><strong>Look first.</strong> One arc matches one arc; two arcs match two arcs. Do not match angles merely because they look alike.</p>
+            </article>
+            <article class="angle-method">
+              <svg class="mini-diagram" viewBox="0 0 105 88" aria-hidden="true"><path d="M12 12 93 76M93 12 12 76" stroke="#0a3768" stroke-width="4"/><path d="M42.3 35.9 A13 13 0 0 1 62.7 35.9M62.7 52.1 A13 13 0 0 1 42.3 52.1" fill="none" stroke="#ff5a51" stroke-width="5"/></svg>
+              <div><h4>2. Vertical angles</h4><p>Opposite angles formed by two intersecting lines are equal.</p></div>
+              <p>If two lines cross like an X, the angles directly across from each other are <strong>vertical angles</strong>. They are always congruent.</p>
+            </article>
+            <article class="angle-method">
+              <svg class="mini-diagram" viewBox="0 0 105 88" aria-hidden="true"><path d="M8 24H97M8 66H97" stroke="#0a3768" stroke-width="4"/><path d="M31 5 72 84" stroke="#2188e8" stroke-width="4"/><path d="M51.87 24 A11 11 0 0 1 46 33.77M51.66 66 A11 11 0 0 1 57.6 56.2" fill="none" stroke="#f7b714" stroke-width="5"/><path d="M14 18h13M14 60h13" stroke="#16b7aa" stroke-width="3"/></svg>
+              <div><h4>3. Parallel lines</h4><p>A transversal creates equal corresponding and alternate-interior angles.</p></div>
+              <p>Confirm the lines are marked parallel. Then use the familiar <strong>F-shape</strong> (corresponding) or <strong>Z-shape</strong> (alternate interior).</p>
+            </article>
+            <article class="angle-method">
+              <svg class="mini-diagram" viewBox="0 0 105 88" aria-hidden="true"><path d="M9 76 52 10 97 76Z" fill="none" stroke="#0a3768" stroke-width="4"/><text x="15" y="69" fill="#16b7aa" font-weight="900">50°</text><text x="60" y="69" fill="#f7b714" font-weight="900">70°</text><text x="43" y="35" fill="#ff5a51" font-weight="900">?</text></svg>
+              <div><h4>4. Triangle angle sum</h4><p>The three interior angles of every triangle add to 180°.</p></div>
+              <p>Find a missing angle with <strong>180° − angle 1 − angle 2</strong>. Equal calculated results give another matching pair.</p>
+            </article>
+          </div>
+          <div class="proof-route" aria-label="Recommended proof sequence"><b>Reliable order:</b><span>read markings</span>→<span>use angle facts</span>→<span>name corresponding vertices</span>→<span>choose AA, SAS, or SSS</span></div>
+        </section>
+
+        <section class="theory-part" aria-labelledby="testsTitle">
+          <div class="section-intro">
+            <div><h3 id="testsTitle">Part 2: Choose AA, SAS, or SSS</h3><p>You do not need to prove every angle and every side. Any one of these three tests is enough.</p></div>
+            <div class="teacher-note"><strong>Order is evidence:</strong> △ABC ∼ △DEF says A ↔ D, B ↔ E, and C ↔ F.</div>
+          </div>
+
+          <div class="theorem-summary" aria-label="Three valid triangle similarity tests">
+            <div><strong>AA</strong><span>Two corresponding angles are equal.</span></div>
+            <div><strong>SAS</strong><span>Two side ratios match, and their included angles are equal.</span></div>
+            <div><strong>SSS</strong><span>All three corresponding side ratios match.</span></div>
+          </div>
+
+          <div class="rule-tabs" role="tablist" aria-label="Triangle similarity rules">
+            <button class="rule-tab" role="tab" aria-selected="true" data-rule="AA">AA<small>Angle–Angle</small></button>
+            <button class="rule-tab" role="tab" aria-selected="false" data-rule="SAS">SAS<small>Side–Angle–Side</small></button>
+            <button class="rule-tab" role="tab" aria-selected="false" data-rule="SSS">SSS<small>Side–Side–Side</small></button>
+          </div>
+
+          <div class="rule-stage" role="tabpanel" aria-live="polite">
+            <div class="rule-visual" id="ruleVisual"></div>
+            <div class="rule-copy">
+              <h4 id="ruleTitle"></h4>
+              <div class="rule-formula" id="ruleFormula"></div>
+              <p id="ruleExplanation"></p>
+              <p class="warning" id="ruleWarning"></p>
+            </div>
+          </div>
+
+          <div class="decision-practice">
+            <div>
+              <h4>Can you guarantee similarity?</h4>
+              <p id="scenarioText"></p>
+              <div class="decision-feedback" id="decisionFeedback" role="status"></div>
+              <button class="next-scenario" id="nextScenario">Try another →</button>
+            </div>
+            <div class="decision-actions" aria-label="Choose whether the triangles must be similar">
+              <button class="decision-button" data-answer="yes">Yes</button>
+              <button class="decision-button" data-answer="no">No</button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+  <script>
+    (() => {
+      const state = { step: 0, scale: 1.25, matches: false, dragging: false };
+      const stepData = [
+        { prompt: "First, look for what stays the same—even when the size changes.", idea: "Same shape.<br>Different size.", tip: "“Similar” does not mean “equal.” The triangles may be different sizes.", action: "Next: Match" },
+        { prompt: "Match the colors: red ↔ red, teal ↔ teal, gold ↔ gold.", idea: "Match the<br>right parts.", tip: "Order matters: A ↔ D, B ↔ E, and C ↔ F. Those are corresponding vertices.", action: "Next: Scale" },
+        { prompt: "Move the slider or drag D. Every side changes by the same multiplier.", idea: "One factor<br>scales all sides.", tip: "If the scale factor is k, every new side equals its matching side × k.", action: "Next: Solve" },
+        { prompt: "Use one matching pair to find the scale factor, then multiply the other sides.", idea: "Find k.<br>Then multiply.", tip: "Example: 6 becomes 9, so k = 9 ÷ 6 = 1.5. Then 8 × 1.5 = 12.", action: "Go to practice" }
+      ];
+
+      const $ = (id) => document.getElementById(id);
+      const zone = $("diagramZone");
+      const svg = $("triangleSvg");
+      const slider = $("scaleSlider");
+      const readout = $("scaleReadout");
+      const dHit = $("pointDHit");
+
+      function clean(n) {
+        const rounded = Math.round(n * 100) / 100;
+        return Number.isInteger(rounded) ? String(rounded) : String(rounded).replace(/0$/, "");
+      }
+
+      function setAttrs(el, attrs) { Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value)); }
+
+      function renderTriangle() {
+        const s = state.scale;
+        const E = { x: 470, y: 350 };
+        const D = { x: 470, y: 350 - (180 * s) };
+        const F = { x: 470 + (240 * s), y: 350 };
+        setAttrs($("sideDE"), { d: `M${D.x} ${D.y} L${E.x} ${E.y}` });
+        setAttrs($("sideEF"), { d: `M${E.x} ${E.y} L${F.x} ${F.y}` });
+        setAttrs($("sideDF"), { d: `M${D.x} ${D.y} L${F.x} ${F.y}` });
+        setAttrs($("pointD"), { cx: D.x, cy: D.y }); setAttrs(dHit, { cx: D.x, cy: D.y, "aria-valuenow": s.toFixed(2) });
+        setAttrs($("pointE"), { cx: E.x, cy: E.y }); setAttrs($("pointF"), { cx: F.x, cy: F.y });
+        setAttrs($("labelD"), { x: D.x - 13, y: D.y - 22 }); setAttrs($("labelE"), { x: E.x - 25, y: E.y + 30 }); setAttrs($("labelF"), { x: F.x + 13, y: F.y + 30 });
+        setAttrs($("labelDE"), { x: ((D.x + E.x) / 2) - 35, y: ((D.y + E.y) / 2) + 5 });
+        setAttrs($("labelEF"), { x: ((E.x + F.x) / 2) - 8, y: E.y + 30 });
+        setAttrs($("labelDF"), { x: ((D.x + F.x) / 2) + 12, y: ((D.y + F.y) / 2) - 8 });
+        $("labelDE").textContent = clean(6 * s); $("labelEF").textContent = clean(8 * s); $("labelDF").textContent = clean(10 * s);
+        // True circular arcs: each endpoint lies exactly on one ray of its angle.
+        setAttrs($("arcD"), { d: `M${D.x} ${D.y + 30} A30 30 0 0 0 ${D.x + 24} ${D.y + 18}` });
+        setAttrs($("arcE"), { d: `M${E.x} ${E.y - 28} A28 28 0 0 1 ${E.x + 28} ${E.y}` });
+        setAttrs($("arcF"), { d: `M${F.x - 28} ${F.y} A28 28 0 0 1 ${F.x - 22.4} ${F.y - 16.8}` });
+        const paths = zone.querySelectorAll(".match-line");
+        paths[0].setAttribute("d", `M95 143 C250 45, 390 40, ${D.x} ${D.y - 12}`);
+        paths[1].setAttribute("d", `M96 350 C235 425, 360 430, ${E.x} ${E.y}`);
+        paths[2].setAttribute("d", `M335 350 C450 425, 670 430, ${F.x} ${F.y}`);
+        slider.value = s.toFixed(2); readout.textContent = clean(s) + "×";
+      }
+
+      function setStep(next) {
+        state.step = Math.max(0, Math.min(3, next));
+        document.querySelectorAll(".step-button").forEach((button, index) => {
+          if (index === state.step) button.setAttribute("aria-current", "step"); else button.removeAttribute("aria-current");
+        });
+        $("currentStep").textContent = state.step + 1;
+        $("stagePrompt").textContent = stepData[state.step].prompt;
+        $("bigIdea").innerHTML = stepData[state.step].idea;
+        $("tipText").textContent = stepData[state.step].tip;
+        $("tryIt").textContent = stepData[state.step].action;
+        if (state.step >= 1) { state.matches = true; zone.classList.add("show-matches"); $("showWhy").setAttribute("aria-pressed", "true"); $("showWhy").textContent = "Hide matches"; }
+        if (state.step === 2) slider.focus({ preventScroll: true });
+        if (state.step === 3) $("practice").scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      function setScale(value) { state.scale = Math.max(.75, Math.min(1.65, Math.round(value * 20) / 20)); renderTriangle(); }
+
+      slider.addEventListener("input", (event) => { setScale(Number(event.target.value)); if (state.step < 2) setStep(2); });
+      $("showWhy").addEventListener("click", () => {
+        state.matches = !state.matches; zone.classList.toggle("show-matches", state.matches);
+        $("showWhy").setAttribute("aria-pressed", String(state.matches));
+        $("showWhy").textContent = state.matches ? "Hide matches" : "Show matches";
+      });
+      document.querySelectorAll(".step-button").forEach(button => button.addEventListener("click", () => setStep(Number(button.dataset.step))));
+      $("prevStep").addEventListener("click", () => setStep(state.step - 1));
+      $("nextStep").addEventListener("click", () => setStep(state.step + 1));
+      $("tryIt").addEventListener("click", () => state.step < 3 ? setStep(state.step + 1) : $("practice").scrollIntoView({ behavior: "smooth", block: "center" }));
+
+      function pointerToScale(event) {
+        const point = svg.createSVGPoint(); point.x = event.clientX; point.y = event.clientY;
+        const local = point.matrixTransform(svg.getScreenCTM().inverse());
+        return (350 - local.y) / 180;
+      }
+      dHit.addEventListener("pointerdown", (event) => { state.dragging = true; zone.classList.add("dragging"); dHit.setPointerCapture(event.pointerId); });
+      dHit.addEventListener("pointermove", (event) => { if (state.dragging) { setScale(pointerToScale(event)); if (state.step < 2) setStep(2); } });
+      dHit.addEventListener("pointerup", () => { state.dragging = false; zone.classList.remove("dragging"); });
+      dHit.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowUp" || event.key === "ArrowRight") { event.preventDefault(); setScale(state.scale + .05); }
+        if (event.key === "ArrowDown" || event.key === "ArrowLeft") { event.preventDefault(); setScale(state.scale - .05); }
+      });
+
+      function celebrate() {
+        const colors = ["#ff5a51", "#16b7aa", "#f7b714", "#2188e8"];
+        $("confetti").innerHTML = Array.from({ length: 34 }, (_, i) => `<i style="left:${Math.random()*100}%;background:${colors[i%4]};--drift:${(Math.random()-.5)*220}px;animation-delay:${Math.random()*.25}s"></i>`).join("");
+        setTimeout(() => $("confetti").innerHTML = "", 1800);
+      }
+      $("checkAnswer").addEventListener("click", () => {
+        const middle = Number($("middleAnswer").value); const longest = Number($("longAnswer").value); const feedback = $("feedback");
+        if (Math.abs(middle - 12) < .001 && Math.abs(longest - 15) < .001) {
+          feedback.className = "feedback good"; feedback.textContent = "Exactly! k = 9 ÷ 6 = 1.5, so the answers are 12 and 15."; celebrate();
+        } else if (!middle || !longest) {
+          feedback.className = "feedback try"; feedback.textContent = "Enter both side lengths first.";
+        } else {
+          feedback.className = "feedback try"; feedback.textContent = "Almost. First find k = 9 ÷ 6, then multiply both 8 and 10 by k.";
+        }
+      });
+
+      const ruleData = {
+        AA: {
+          title: "AA: two angle pairs are equal",
+          formula: "∠A = ∠D and ∠B = ∠E  ⟹  △ABC ∼ △DEF",
+          explanation: "Once two pairs match, the third pair must also match because each triangle totals 180°. Equal angles fix the shape; the size may still change.",
+          warning: "You do not need the side lengths for AA.",
+          svg: `<svg viewBox="0 0 360 210" aria-label="Two similar triangles with matching angle arcs"><path d="M25 175 100 35 180 175Z" fill="none" stroke="#0a3768" stroke-width="6"/><path d="M210 175 255 91 303 175Z" fill="none" stroke="#0a3768" stroke-width="6"/><path d="M35.4 155.6 A22 22 0 0 1 47 175M218.5 159.1 A18 18 0 0 1 228 175" fill="none" stroke="#16b7aa" stroke-width="6"/><path d="M89.6 54.4 A22 22 0 0 0 110.9 54.1M246.5 106.9 A18 18 0 0 0 264.2 106.7" fill="none" stroke="#ff5a51" stroke-width="6"/><text x="43" y="151" fill="#16b7aa" font-weight="900">50°</text><text x="94" y="83" fill="#ff5a51" font-weight="900">70°</text><text x="217" y="153" fill="#16b7aa" font-weight="900">50°</text><text x="247" y="136" fill="#ff5a51" font-weight="900">70°</text></svg>`
+        },
+        SAS: {
+          title: "SAS: two side pairs are proportional",
+          formula: "AB / DE = AC / DF and ∠A = ∠D",
+          explanation: "The equal angle must be the included angle—the angle between the two compared sides. Here 6/9 = 8/12 = 2/3, and the angle between them matches.",
+          warning: "SSA is not a similarity test. If the equal angle is not between the known sides, similarity is not guaranteed.",
+          svg: `<svg viewBox="0 0 360 210" aria-label="Two proportional triangles demonstrating the SAS similarity rule"><path d="M22 175 92 45 182 175Z" fill="none" stroke="#0a3768" stroke-width="6"/><path d="M207 175 249 97 303 175Z" fill="none" stroke="#0a3768" stroke-width="6"/><path d="M81.6 64.4 A22 22 0 0 0 104.5 63.1M240.5 112.9 A18 18 0 0 0 259.2 111.8" fill="none" stroke="#ff5a51" stroke-width="6"/><text x="42" y="105" fill="#16b7aa" font-weight="900">6</text><text x="135" y="106" fill="#f0a900" font-weight="900">8</text><text x="216" y="132" fill="#16b7aa" font-weight="900">9</text><text x="278" y="132" fill="#f0a900" font-weight="900">12</text></svg>`
+        },
+        SSS: {
+          title: "SSS: all three side pairs are proportional",
+          formula: "AB / DE = BC / EF = AC / DF",
+          explanation: "Compare corresponding sides in the same order. Here 6/9 = 8/12 = 10/15 = 2/3, so one triangle is a scaled copy of the other.",
+          warning: "Matching only two side ratios is not enough unless the included angle also matches (SAS).",
+          svg: `<svg viewBox="0 0 360 210" aria-label="Six eight ten and nine twelve fifteen proportional triangles demonstrating SSS"><path d="M20 175 75 55 180 175Z" fill="none" stroke="#0a3768" stroke-width="6"/><path d="M205 175 238 103 301 175Z" fill="none" stroke="#0a3768" stroke-width="6"/><text x="34" y="112" fill="#ff5a51" font-weight="900">6</text><text x="91" y="198" fill="#16b7aa" font-weight="900">8</text><text x="128" y="110" fill="#d99800" font-weight="900">10</text><text x="211" y="137" fill="#ff5a51" font-weight="900">9</text><text x="246" y="198" fill="#16b7aa" font-weight="900">12</text><text x="275" y="137" fill="#d99800" font-weight="900">15</text></svg>`
+        }
+      };
+
+      function showRule(name) {
+        const rule = ruleData[name];
+        document.querySelectorAll(".rule-tab").forEach(tab => tab.setAttribute("aria-selected", String(tab.dataset.rule === name)));
+        $("ruleVisual").innerHTML = rule.svg;
+        $("ruleTitle").textContent = rule.title;
+        $("ruleFormula").textContent = rule.formula;
+        $("ruleExplanation").textContent = rule.explanation;
+        $("ruleWarning").textContent = rule.warning;
+      }
+      document.querySelectorAll(".rule-tab").forEach(tab => tab.addEventListener("click", () => showRule(tab.dataset.rule)));
+
+      const scenarios = [
+        { text: "Two angles in one triangle are 42° and 71°. Two angles in another triangle are also 42° and 71°.", answer: "yes", why: "Yes—AA guarantees similarity. The third angles also both equal 67°." },
+        { text: "Two side pairs are proportional, and one non-included angle is equal.", answer: "no", why: "No—this is SSA, which does not guarantee similarity. The equal angle must lie between the compared sides for SAS." },
+        { text: "The side lengths are 4, 6, 7 and 8, 12, 14.", answer: "yes", why: "Yes—SSS works because 4/8 = 6/12 = 7/14 = 1/2." },
+        { text: "Two sides are 5 and 8; the matching sides are 10 and 15. The included angles are equal.", answer: "no", why: "No—the side ratios differ: 5/10 = 1/2 but 8/15 ≠ 1/2, so SAS fails." }
+      ];
+      let scenarioIndex = 0;
+      function showScenario() {
+        $("scenarioText").textContent = scenarios[scenarioIndex].text;
+        $("decisionFeedback").textContent = "";
+        $("decisionFeedback").className = "decision-feedback";
+        $("nextScenario").classList.remove("visible");
+      }
+      document.querySelectorAll(".decision-button").forEach(button => button.addEventListener("click", () => {
+        const scenario = scenarios[scenarioIndex];
+        const correct = button.dataset.answer === scenario.answer;
+        $("decisionFeedback").textContent = (correct ? "Correct. " : "Not quite. ") + scenario.why;
+        $("decisionFeedback").className = "decision-feedback " + (correct ? "good" : "try");
+        $("nextScenario").classList.add("visible");
+      }));
+      $("nextScenario").addEventListener("click", () => { scenarioIndex = (scenarioIndex + 1) % scenarios.length; showScenario(); });
+
+      showRule("AA");
+      showScenario();
+      renderTriangle();
+    })();
+  </script>
+</body>
+</html>

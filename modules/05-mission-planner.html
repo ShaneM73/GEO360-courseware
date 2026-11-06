@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Drone Flight Mission Planner — Interactive Photogrammetry Lab</title>
+<style>
+:root{--bg:#eef5f7;--card:#fff;--ink:#18323c;--muted:#607781;--blue:#1677ff;--cyan:#00a7c4;--green:#1c9b62;--amber:#f0a629;--red:#dc4c4c;--line:#cbd9de;--dark:#102a34}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#edf7f7,#f7f4eb);color:var(--ink)}
+header{padding:18px 24px;background:linear-gradient(90deg,#0c3543,#155b68);color:white;display:flex;justify-content:space-between;gap:18px;align-items:center;box-shadow:0 3px 14px #0002}
+header h1{margin:0;font-size:clamp(20px,2.3vw,34px)} header p{margin:4px 0 0;color:#d7eef1;font-size:13px}.badge{background:#ffffff18;border:1px solid #ffffff44;border-radius:999px;padding:8px 12px;white-space:nowrap;font-weight:700}
+main{max-width:1600px;margin:auto;padding:16px}.workflow{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:12px}.step{background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px #1231}.step.active{background:#e5f4ff;border-color:#6bb5ff;color:#0759b4}.step b{display:block;font-size:18px}
+.grid{display:grid;grid-template-columns:340px minmax(500px,1fr);gap:14px}.card{background:var(--card);border:1px solid #d7e2e5;border-radius:16px;box-shadow:0 5px 20px #17343b12;overflow:hidden}.card h2{font-size:16px;margin:0;padding:13px 15px;border-bottom:1px solid #e3ecee;background:#fbfdfd}.controls{padding:13px}.group{border-bottom:1px dashed #d8e2e5;padding:0 0 12px;margin-bottom:12px}.group:last-child{border:0}.group h3{font-size:13px;margin:0 0 8px;color:#37606b}.row{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center;margin:7px 0}.row label{font-size:12px}.row input,.row select{width:100%;padding:7px 8px;border:1px solid #b9cbd1;border-radius:8px;background:white}.rangeRow{display:grid;grid-template-columns:1fr 58px;gap:8px}.rangeRow output{font-size:12px;font-weight:700;text-align:right}.buttons{display:flex;flex-wrap:wrap;gap:7px}.buttons button,button{border:0;border-radius:9px;padding:8px 10px;font-weight:700;cursor:pointer;background:#e8f0f2;color:#244750}.buttons button.primary,button.primary{background:var(--blue);color:#fff}.buttons button.warn{background:#fff3dc;color:#8a5700}.buttons button.danger{background:#ffe6e6;color:#a22727}
+.stage{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}.panel{border:1px solid #d6e2e5;border-radius:14px;overflow:hidden;background:#f8fbfc;min-height:430px;position:relative}.panelTitle{position:absolute;z-index:3;top:10px;left:10px;background:#0f2935d9;color:white;border-radius:8px;padding:6px 9px;font-size:12px;font-weight:700;pointer-events:none}.panel canvas{width:100%;height:430px;display:block}.full{grid-column:1/-1}.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:0 12px 12px}.metric{background:#f3f8fa;border:1px solid #dce8eb;border-radius:10px;padding:9px}.metric small{display:block;color:var(--muted);font-size:10px}.metric strong{font-size:15px}.ok{color:var(--green)}.bad{color:var(--red)}
+.teacher{margin:0 12px 12px;display:grid;grid-template-columns:110px 1fr;gap:12px;background:linear-gradient(90deg,#fff7d9,#fffdf5);border:1px solid #eadca9;border-radius:14px;padding:12px;min-height:120px}.cartoon{position:relative;width:100px;height:100px}.head{position:absolute;width:45px;height:45px;border:3px solid #313131;border-radius:50%;left:28px;top:3px;background:#ffd7b0}.hair{position:absolute;width:46px;height:20px;border-radius:25px 25px 8px 8px;background:#263238;left:28px;top:1px}.body{position:absolute;width:55px;height:48px;background:#2c7bd0;border:3px solid #313131;border-radius:12px 12px 4px 4px;left:23px;top:48px}.arm{position:absolute;width:42px;height:7px;background:#ffd7b0;border:2px solid #313131;border-radius:5px;left:67px;top:56px;transform:rotate(-28deg);transform-origin:left}.teacher h3{margin:0 0 5px}.teacher p{margin:0;line-height:1.45;font-size:13px}.formula{font-family:Consolas,monospace;background:#ffffffaa;padding:2px 5px;border-radius:5px}.legend{position:absolute;right:8px;bottom:8px;background:#ffffffdd;border:1px solid #ccdadd;border-radius:8px;padding:6px 8px;font-size:10px;z-index:4}.legend span{display:inline-block;width:14px;height:3px;margin:0 4px 2px 8px}.note{font-size:11px;color:#657a83;line-height:1.4}.status{padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;margin-top:8px}.status.good{background:#e7f7ee;color:#147247}.status.fail{background:#ffe9e9;color:#a12b2b}
+.tabs{display:flex;gap:8px;padding:10px 12px 0}.tab{border:1px solid #cad9df;background:#eef5f7;color:#244750;border-radius:999px;padding:8px 14px;font-weight:700;cursor:pointer}.tab.active{background:#1677ff;color:#fff;border-color:#1677ff}.tabPage{display:none}.tabPage.active{display:block}.formulaBox{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 12px 0}.formulaCard{background:#f5fafb;border:1px solid #dbe7eb;border-radius:12px;padding:10px}.formulaCard small{display:block;color:#607781;font-size:11px}.formulaCard strong{display:block;font-size:16px;margin-top:4px}.wideNote{margin:12px;border:1px solid #eadca9;background:linear-gradient(90deg,#fff7d9,#fffdf5);border-radius:14px;padding:12px 14px;line-height:1.5;font-size:13px}
+@media(max-width:1050px){.grid{grid-template-columns:1fr}.stage{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(3,1fr)}.workflow{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header><div><h1>🚁 Drone Flight Mission Planner</h1><p>Interactive photogrammetry lab: from study area and camera geometry to overlap-safe image acquisition.</p></div><div class="badge">2D Map + 3D Simulation</div></header>
+<main>
+<div class="workflow" id="workflow">
+ <div class="step active" data-step="0"><b>①</b>Study Site</div><div class="step" data-step="1"><b>②</b>Camera</div><div class="step" data-step="2"><b>③</b>Scale & Height</div><div class="step" data-step="3"><b>④</b>Footprint</div><div class="step" data-step="4"><b>⑤</b>Flight Lines</div><div class="step" data-step="5"><b>⑥</b>Photo Stations</div><div class="step" data-step="6"><b>⑦</b>Simulate & QC</div>
+</div>
+<div class="grid">
+<section class="card"><h2>Mission Design Controls</h2><div class="controls">
+ <div class="group"><h3>Study area</h3><div class="buttons"><button id="newSite">🎲 New irregular site</button><button id="editSite">✏️ Edit vertices</button><button id="resetView">⌂ Reset view</button></div><p class="note">In edit mode, drag the polygon vertices on the 2D map. Dimensions are in ground meters.</p></div>
+ <div class="group"><h3>Camera & required nominal scale</h3>
+  <div class="row"><label>Focal length (inches)</label><input id="focal" type="number" min="0.2" max="12" step="0.1" value="6"></div>
+  <div class="row"><label>Square sensor side (mm)</label><input id="sensorW" type="number" min="5" max="60" step="0.1" value="13.2"></div>
+  <input id="sensorH" type="hidden" value="13.2">
+  <div class="row"><label>Image width / height (px)</label><input id="pxW" type="number" min="1000" max="20000" step="100" value="5472"></div>
+  <div class="row"><label>Average PSR (1 : N)</label><input id="scale" type="number" min="500" max="50000" step="100" value="12000"></div>
+  <div class="row"><label>Simulated photo format</label><input type="text" value="9 × 9 in square" readonly></div>
+  <p class="note">The drone camera is modeled with a <b>square field of view</b>, matching the classic 9 × 9 inch aerial-photo frame shape. The 9 × 9 inch value is the simulated output-photo format; the effective digital sensor side above controls the field angle and ground footprint.</p>
+ </div>
+ <div class="group"><h3>Overlap requirements</h3>
+  <div class="row"><label>Forward overlap</label><div class="rangeRow"><input id="frontlap" type="range" min="60" max="90" value="60"><output id="frontOut">60%</output></div></div>
+  <div class="row"><label>Side overlap</label><div class="rangeRow"><input id="sidelap" type="range" min="21" max="70" value="30"><output id="sideOut">30%</output></div></div>
+  <div class="row"><label>Flight-line direction</label><select id="direction"><option value="0">East ↔ West</option><option value="90" selected>North ↕ South</option><option value="30">30° diagonal</option><option value="60">60° diagonal</option><option value="auto">Auto: longest-axis</option></select></div>
+  <div class="row"><label>Boundary safety margin</label><input id="margin" type="number" min="0" max="100" step="5" value="20"></div>
+ </div>
+ <div class="group"><h3>Simulation</h3><div class="buttons"><button class="primary" id="play">▶ Fly Mission</button><button id="pause">⏸ Pause</button><button id="stepBtn">⏭ Next Photo</button><button class="danger" id="restart">↺ Restart</button></div><div class="row"><label>Simulation speed</label><div class="rangeRow"><input id="speed" type="range" min="1" max="10" value="4"><output id="speedOut">4×</output></div></div></div>
+ <div id="qc" class="status good">✓ Mission meets overlap requirements.</div>
+</div></section>
+<section class="card"><h2>Mission Workspace</h2>
+ <div class="tabs"><button class="tab active" data-tab="mission">Mission Plan</button><button class="tab" data-tab="distance">Photo-Distance 3D Cartoon</button></div>
+ <div id="workspaceMission" class="tabPage active">
+  <div class="stage">
+   <div class="panel"><div class="panelTitle">2D MAP — plan view</div><canvas id="map"></canvas><div class="legend"><b>Legend</b><br><span style="background:#2582db"></span>flight line <span style="background:#7b4ed9"></span>safety line <span style="background:#ed4d4d"></span>photo station<br><span style="background:#26a66a"></span>study area <span style="background:#f0a629"></span>photo footprint</div></div>
+   <div class="panel"><div class="panelTitle">3D SCENE — drag to orbit · Shift/Right-drag to pan · wheel to zoom</div><canvas id="scene"></canvas></div>
+  </div>
+  <div class="metrics">
+   <div class="metric"><small>Flying height above ground</small><strong id="mHeight">—</strong></div><div class="metric"><small>Ground footprint W × H</small><strong id="mFoot">—</strong></div><div class="metric"><small>Approx. GSD</small><strong id="mGsd">—</strong></div><div class="metric"><small>Photo spacing</small><strong id="mPhoto">—</strong></div><div class="metric"><small>Flight-line spacing</small><strong id="mLine">—</strong></div><div class="metric"><small>Planned images / strips</small><strong id="mCount">—</strong></div>
+  </div>
+  <div class="teacher"><div class="cartoon"><div class="head"></div><div class="hair"></div><div class="body"></div><div class="arm"></div></div><div><h3 id="teachTitle">Step 1 — Define the study site</h3><p id="teachText"></p></div></div>
+ </div>
+ <div id="workspaceDistance" class="tabPage">
+  <div class="formulaBox">
+   <div class="formulaCard"><small>Photo size (forward direction)</small><strong id="dPhotoSize">9.0 in</strong></div>
+   <div class="formulaCard"><small>Ground coverage of one photo side</small><strong id="dGroundSide">—</strong></div>
+   <div class="formulaCard"><small>Forward overlap amount</small><strong id="dOverlapAmt">—</strong></div>
+   <div class="formulaCard"><small>Photo distance (air base)</small><strong id="dPhotoDist">—</strong></div>
+  </div>
+  <div style="padding:0 12px 6px">
+   <div class="card" style="border-radius:12px;box-shadow:none">
+    <div class="controls" style="padding:10px 12px 6px">
+     <div class="row"><label>Demo forward overlap</label><div class="rangeRow"><input id="distFrontlap" type="range" min="0" max="90" value="60"><output id="distFrontOut">60%</output></div></div>
+     <div class="buttons"><button id="syncDistOverlap">↺ Use mission overlap</button></div>
+     <p class="note">This tab has its own overlap slider so you can interactively test how increasing overlap shortens the photo distance. In the 3D scene, drag to orbit, Shift/right-drag to pan, and wheel to zoom.</p>
+    </div>
+   </div>
+  </div>
+  <div class="stage">
+   <div class="panel full"><div class="panelTitle">3D SCENE — drag to orbit · Shift/Right-drag to pan · wheel to zoom</div><canvas id="distance3d"></canvas></div>
+  </div>
+  <div class="wideNote"><b>How the calculation works:</b> For a standard <b>9 × 9 inch</b> aerial photo at average scale <span class="formula">1:N</span>, the ground length covered by one photo side is <span class="formula">9 in × N</span>. If the required forward overlap is <span class="formula">p</span>, then the overlap amount is <span class="formula">(9 in × N) × p</span>. The distance between two exposure stations (air base / photo distance) is therefore <span class="formula">(9 in × N) × (1 − p)</span>. The interactive 3D scene below illustrates exactly that idea and updates live when you adjust the demo overlap.</div>
+ </div>
+</section></div>
+</main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id), map=$('map'), scene=$('scene'), dist3d=$('distance3d'), mc=map.getContext('2d'), sc=scene.getContext('2d'), dc=dist3d.getContext('2d');
+const state={site:[[-180,-120],[80,-120],[80,-90],[180,-90],[180,110],[20,110],[20,140],[-180,140]],edit:false,step:0,anim:0,playing:false,last:0,orbit:{yaw:-0.65,pitch:0.58,zoom:1.0,panX:0,panY:0},drag:null};
+const distState={overlap:60,orbit:{yaw:-0.78,pitch:0.72,zoom:1.15,panX:0,panY:0},drag:null};
+// Explicitly populate the teaching defaults on every load so no control appears blank.
+const DEFAULTS={focal:'6',sensorW:'13.2',sensorH:'13.2',pxW:'5472',scale:'12000',frontlap:'60',sidelap:'30',direction:'90',margin:'20',speed:'4'};
+Object.entries(DEFAULTS).forEach(([id,v])=>{ if($(id)) $(id).value=v; });
+$('frontOut').value='60%'; $('sideOut').value='30%'; $('speedOut').value='4×'; $('distFrontlap').value='60'; $('distFrontOut').value='60%';
+const inputs=['focal','sensorW','pxW','scale','frontlap','sidelap','direction','margin'];
+inputs.forEach(id=>$(id).addEventListener('input',()=>{
+  if(id==='sensorW') $('sensorH').value=$(id).value; // keep the FOV square
+  if(id==='frontlap') $('frontOut').value=$(id).value+'%';
+  if(id==='sidelap') $('sideOut').value=$(id).value+'%';
+  recalc();
+}));
+$('speed').oninput=()=> $('speedOut').value=$('speed').value+'×';
+$('distFrontlap').oninput=()=>{distState.overlap=+$('distFrontlap').value;$('distFrontOut').value=distState.overlap+'%';drawDistanceDemo()};
+$('syncDistOverlap').onclick=()=>{distState.overlap=val('frontlap');$('distFrontlap').value=distState.overlap;$('distFrontOut').value=distState.overlap+'%';drawDistanceDemo()};
+[...document.querySelectorAll('.tab')].forEach(btn=>btn.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===btn));$('workspaceMission').classList.toggle('active',btn.dataset.tab==='mission');$('workspaceDistance').classList.toggle('active',btn.dataset.tab==='distance');drawAll();drawDistanceDemo();});
+function val(id){return +$(id).value}
+function rotate(p,a){let c=Math.cos(a),s=Math.sin(a);return [p[0]*c-p[1]*s,p[0]*s+p[1]*c]}
+function bbox(poly){let xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);return {minx:Math.min(...xs),maxx:Math.max(...xs),miny:Math.min(...ys),maxy:Math.max(...ys)}}
+function centroid(poly){let x=0,y=0;poly.forEach(p=>{x+=p[0];y+=p[1]});return [x/poly.length,y/poly.length]}
+function pointInPoly(p,poly){let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){let xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];let hit=((yi>p[1])!=(yj>p[1]))&&(p[0]<(xj-xi)*(p[1]-yi)/(yj-yi+1e-12)+xi);if(hit)inside=!inside}return inside}
+function linePolyIntersections(y,poly){let xs=[];for(let i=0,j=poly.length-1;i<poly.length;j=i++){let a=poly[j],b=poly[i];if((a[1]<=y&&b[1]>y)||(b[1]<=y&&a[1]>y)){let t=(y-a[1])/(b[1]-a[1]);xs.push(a[0]+t*(b[0]-a[0]))}}return xs.sort((a,b)=>a-b)}
+function autoAngle(){let best=0,bestSpan=-1;for(let d=0;d<180;d+=5){let a=-d*Math.PI/180,b=bbox(state.site.map(p=>rotate(p,a)));let span=b.maxx-b.minx;if(span>bestSpan){bestSpan=span;best=d}}return best*Math.PI/180}
+function calc(){let f=val('focal')*0.0254,N=val('scale'),sw=val('sensorW')/1000,sh=val('sensorH')/1000;let H=f*N;let footprintW=sw*N,footprintH=sh*N;let front=val('frontlap')/100,side=val('sidelap')/100;let photoSpacing=footprintH*(1-front),lineSpacing=footprintW*(1-side);let angle=$('direction').value==='auto'?autoAngle():val('direction')*Math.PI/180;let margin=val('margin');let rot=state.site.map(p=>rotate(p,-angle)),b=bbox(rot);let y0=b.miny-footprintW/2-margin,y1=b.maxy+footprintW/2+margin;let lines=[];for(let y=y0;y<=y1+0.001;y+=lineSpacing){let ints=linePolyIntersections(y,rot);if(ints.length>=2){let xmin=ints[0]-footprintH/2-margin,xmax=ints[ints.length-1]+footprintH/2+margin;let pts=[];for(let x=xmin;x<=xmax+0.001;x+=photoSpacing)pts.push(rotate([x,y],angle));if(pts.length && Math.hypot(pts.at(-1)[0]-rotate([xmax,y],angle)[0],pts.at(-1)[1]-rotate([xmax,y],angle)[1])>photoSpacing*.2)pts.push(rotate([xmax,y],angle));lines.push({y,pts,safety:false})}}
+// Add two extra safety flight lines beyond each cross-flight side of the AOI.
+// For the default N-S mission these are two lines west and two lines east.
+if(lines.length){let minY=Math.min(...lines.map(l=>l.y)),maxY=Math.max(...lines.map(l=>l.y));let sxmin=b.minx-footprintH/2-margin,sxmax=b.maxx+footprintH/2+margin;let makeSafety=y=>{let pts=[];for(let x=sxmin;x<=sxmax+0.001;x+=photoSpacing)pts.push(rotate([x,y],angle));if(pts.length && Math.hypot(pts.at(-1)[0]-rotate([sxmax,y],angle)[0],pts.at(-1)[1]-rotate([sxmax,y],angle)[1])>photoSpacing*.2)pts.push(rotate([sxmax,y],angle));return {y,pts,safety:true}};lines.push(makeSafety(minY-lineSpacing),makeSafety(minY-2*lineSpacing),makeSafety(maxY+lineSpacing),makeSafety(maxY+2*lineSpacing));lines.sort((a,b)=>a.y-b.y)}
+// Re-apply lawn-mower direction after all normal and safety lines are assembled.
+lines.forEach((l,i)=>{if(i%2)l.pts.reverse()});let stations=lines.flatMap((l,li)=>l.pts.map((p,pi)=>({p,li,pi,safety:l.safety})));let gsd=(sw/val('pxW'))*N*100;return {H,footprintW,footprintH,photoSpacing,lineSpacing,angle,lines,stations,gsd,front,side}}
+let plan=calc();
+function recalc(){plan=calc();state.anim=Math.min(state.anim,Math.max(0,plan.stations.length-1));updateMetrics();drawAll();drawDistanceDemo()}
+function updateMetrics(){$('mHeight').textContent=plan.H.toFixed(1)+' m';$('mFoot').textContent=plan.footprintW.toFixed(1)+' × '+plan.footprintH.toFixed(1)+' m';$('mGsd').textContent=plan.gsd.toFixed(2)+' cm/px';$('mPhoto').textContent=plan.photoSpacing.toFixed(1)+' m';$('mLine').textContent=plan.lineSpacing.toFixed(1)+' m';$('mCount').textContent=plan.stations.length+' / '+plan.lines.length;let ok=plan.front>=.60&&plan.side>.20;$('qc').className='status '+(ok?'good':'fail');$('qc').textContent=ok?'✓ Mission meets ≥60% forward overlap and >20% sidelap.':'⚠ Overlap requirement is not satisfied.';teach()}
+const lessons=[
+['Step 1 — Define the study site','The green irregular polygon is the Area of Interest (AOI). A real mission should cover the AOI plus a small safety margin so edge features still appear in enough photographs. Click <b>Edit vertices</b> and drag corners to reshape it.'],
+['Step 2 — Define the camera','Camera geometry controls how much ground one photograph sees. This teaching model uses a <b>square camera field of view</b> to mimic the classic <b>9 × 9 inch aerial-photo format</b>. Enter focal length in inches and the effective square sensor side. The default 6-inch focal length represents a classic mapping-camera value. A longer focal length narrows the field of view; a larger sensor widens it.'],
+['Step 3 — Convert nominal scale to flying height','For a near-vertical photograph over approximately level terrain, <span class="formula">photo scale ≈ f / H</span>. Therefore, for average PSR <span class="formula">1:N</span>, <span class="formula">H ≈ f × N</span> when f and H use the same units. The app computes height above ground from your focal length and nominal scale.'],
+['Step 4 — Calculate each photo footprint','Because the simulated photo format is square, each nadir image produces a <b>square ground footprint</b>. At nominal scale 1:N, each footprint side is approximately <span class="formula">effective sensor side × N</span>. The translucent amber squares show successive photo coverage.'],
+['Step 5 — Lay out flight strips','Parallel strips cover the AOI. Their spacing is <span class="formula">footprint width × (1 − sidelap)</span>. The planner also adds <b>two extra safety strips beyond each side of the study area</b>; for the default north–south mission, that means two west-side and two east-side safety lines, shown in purple.'],
+['Step 6 — Place exposure stations','Along each strip, photo spacing is <span class="formula">footprint length × (1 − forward overlap)</span>. At 60% overlap, the drone advances only 40% of a footprint before taking the next photograph. Red dots are exposure stations.'],
+['Step 7 — Fly, inspect, and quality-check','Run the simulation. The drone follows a lawn-mower pattern and exposes images at the red stations. The 2D map shows plan geometry while the 3D view connects flying height, camera rays, terrain, and photo footprint. Before a real mission, also check regulations, airspace, weather, battery reserve, obstacles, GNSS, home point, emergency procedures, and local site permissions.']];
+function teach(){let L=lessons[state.step];$('teachTitle').textContent=L[0];$('teachText').innerHTML=L[1]}
+[...document.querySelectorAll('.step')].forEach(el=>el.onclick=()=>{state.step=+el.dataset.step;document.querySelectorAll('.step').forEach((x,i)=>x.classList.toggle('active',i===state.step));teach();drawAll()});
+function fit(canvas,ctx){let r=canvas.getBoundingClientRect(),d=devicePixelRatio||1;if(canvas.width!==Math.round(r.width*d)||canvas.height!==Math.round(r.height*d)){canvas.width=Math.round(r.width*d);canvas.height=Math.round(r.height*d)}ctx.setTransform(d,0,0,d,0,0);return {w:r.width,h:r.height}}
+function mapTransform(w,h){let b=bbox(state.site),pad=80;let span=Math.max(b.maxx-b.minx+160,b.maxy-b.miny+160),s=Math.min((w-2*pad)/span,(h-2*pad)/span);let c=[(b.minx+b.maxx)/2,(b.miny+b.maxy)/2];return {s,c,to:p=>[w/2+(p[0]-c[0])*s,h/2-(p[1]-c[1])*s],from:q=>[(q[0]-w/2)/s+c[0],-(q[1]-h/2)/s+c[1]]}}
+function footprintCorners(center){let hw=plan.footprintH/2,hh=plan.footprintW/2,a=plan.angle;return [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]].map(q=>{let r=rotate(q,a);return [r[0]+center[0],r[1]+center[1]]})}
+function drawMap(){let {w,h}=fit(map,mc),T=mapTransform(w,h);mc.clearRect(0,0,w,h);mc.fillStyle='#eaf1e8';mc.fillRect(0,0,w,h); // grid
+mc.strokeStyle='#d7e1da';mc.lineWidth=1;for(let x=0;x<w;x+=35){mc.beginPath();mc.moveTo(x,0);mc.lineTo(x,h);mc.stroke()}for(let y=0;y<h;y+=35){mc.beginPath();mc.moveTo(0,y);mc.lineTo(w,y);mc.stroke()}
+let poly=state.site.map(T.to);mc.beginPath();poly.forEach((p,i)=>i?mc.lineTo(...p):mc.moveTo(...p));mc.closePath();mc.fillStyle='#6fbe7d55';mc.fill();mc.strokeStyle='#218653';mc.lineWidth=3;mc.stroke();
+// footprints, only if step >=3
+if(state.step>=3){let upto=state.playing||state.anim>0?Math.min(plan.stations.length-1,Math.floor(state.anim)):plan.stations.length-1;plan.stations.forEach((st,i)=>{if(i>upto&&state.step===6)return;let cs=footprintCorners(st.p).map(T.to);mc.beginPath();cs.forEach((p,j)=>j?mc.lineTo(...p):mc.moveTo(...p));mc.closePath();mc.fillStyle=i===Math.floor(state.anim)?'#ffb21f35':'#f0a62918';mc.fill();mc.strokeStyle='#e2a12855';mc.lineWidth=1;mc.stroke()})}
+if(state.step>=4){plan.lines.forEach(l=>{mc.beginPath();l.pts.forEach((p,i)=>{let q=T.to(p);i?mc.lineTo(...q):mc.moveTo(...q)});mc.strokeStyle=l.safety?'#7b4ed9':'#267fcf';mc.lineWidth=l.safety?2.6:2;mc.stroke()})}
+if(state.step>=5){plan.stations.forEach((st,i)=>{let q=T.to(st.p);mc.beginPath();mc.arc(q[0],q[1],i===Math.floor(state.anim)?5:3,0,Math.PI*2);mc.fillStyle=i===Math.floor(state.anim)?'#ff7b00':'#df4141';mc.fill()})}
+if(state.edit){state.site.forEach(p=>{let q=T.to(p);mc.beginPath();mc.arc(q[0],q[1],7,0,Math.PI*2);mc.fillStyle='#fff';mc.fill();mc.strokeStyle='#0d6efd';mc.lineWidth=3;mc.stroke()})}
+// north arrow + scale
+mc.fillStyle='#18323c';mc.font='bold 12px sans-serif';mc.fillText('N',28,42);mc.beginPath();mc.moveTo(32,48);mc.lineTo(32,75);mc.strokeStyle='#18323c';mc.lineWidth=2;mc.stroke();mc.beginPath();mc.moveTo(32,48);mc.lineTo(26,58);mc.lineTo(38,58);mc.closePath();mc.fill();let len=100*T.s;mc.fillRect(20,h-30,len,3);mc.fillText('100 m',20,h-36);state.mapT=T}
+function proj3(p,z,w,h){let yaw=state.orbit.yaw,pitch=state.orbit.pitch,zoom=state.orbit.zoom;let x=p[0],y=p[1];let cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);let X=x*cy-y*sy,Y=x*sy+y*cy;/* Positive z must project upward on screen. */let Y2=Y*cp+z*sp,Z=Y*sp-z*cp;let s=0.72*zoom;return [w*.5+state.orbit.panX+X*s,h*.68+state.orbit.panY-Y2*s,Z]}
+function drawScene(){let {w,h}=fit(scene,sc);sc.clearRect(0,0,w,h);let grd=sc.createLinearGradient(0,0,0,h);grd.addColorStop(0,'#cde9f5');grd.addColorStop(.58,'#eef7f5');grd.addColorStop(.59,'#b9d19c');grd.addColorStop(1,'#829e6c');sc.fillStyle=grd;sc.fillRect(0,0,w,h);
+// terrain grid
+sc.strokeStyle='#6e8b6550';sc.lineWidth=1;for(let i=-300;i<=300;i+=50){let a=proj3([-320,i],0,w,h),b=proj3([320,i],0,w,h);sc.beginPath();sc.moveTo(a[0],a[1]);sc.lineTo(b[0],b[1]);sc.stroke();a=proj3([i,-260],0,w,h);b=proj3([i,260],0,w,h);sc.beginPath();sc.moveTo(a[0],a[1]);sc.lineTo(b[0],b[1]);sc.stroke()}
+let poly=state.site.map(p=>proj3(p,1,w,h));sc.beginPath();poly.forEach((p,i)=>i?sc.lineTo(p[0],p[1]):sc.moveTo(p[0],p[1]));sc.closePath();sc.fillStyle='#4eae6b55';sc.fill();sc.strokeStyle='#167a45';sc.lineWidth=2;sc.stroke();
+if(state.step>=4)plan.lines.forEach(l=>{sc.beginPath();l.pts.forEach((p,i)=>{let q=proj3(p,plan.H,w,h);i?sc.lineTo(q[0],q[1]):sc.moveTo(q[0],q[1])});sc.strokeStyle=l.safety?'#7b4ed9':'#227acb';sc.lineWidth=l.safety?2.6:2;sc.stroke()});
+let idx=Math.min(plan.stations.length-1,Math.floor(state.anim)),st=plan.stations[idx];if(st){let ground=footprintCorners(st.p).map(p=>proj3(p,1,w,h)),dr=proj3(st.p,plan.H,w,h);if(state.step>=3){sc.beginPath();ground.forEach((p,i)=>i?sc.lineTo(p[0],p[1]):sc.moveTo(p[0],p[1]));sc.closePath();sc.fillStyle='#ffb21f55';sc.fill();sc.strokeStyle='#e09300';sc.stroke();ground.forEach(g=>{sc.beginPath();sc.moveTo(dr[0],dr[1]);sc.lineTo(g[0],g[1]);sc.strokeStyle='#e19b1a88';sc.stroke()})}drawDrone(dr[0],dr[1]);let base=proj3(st.p,0,w,h);sc.setLineDash([5,5]);sc.beginPath();sc.moveTo(dr[0],dr[1]);sc.lineTo(base[0],base[1]);sc.strokeStyle='#263b4599';sc.stroke();sc.setLineDash([]);sc.fillStyle='#16313b';sc.font='12px sans-serif';sc.fillText('H = '+plan.H.toFixed(1)+' m AGL',dr[0]+14,(dr[1]+base[1])/2)}
+sc.fillStyle='#18323c';sc.font='12px sans-serif';sc.fillText('Drag = orbit   •   Shift/Right-drag = pan   •   Wheel = zoom',12,h-14)}
+function drawDrone(x,y){sc.save();sc.translate(x,y);sc.strokeStyle='#222';sc.lineWidth=3;sc.beginPath();sc.moveTo(-18,-9);sc.lineTo(18,9);sc.moveTo(-18,9);sc.lineTo(18,-9);sc.stroke();[[-19,-10],[19,10],[-19,10],[19,-10]].forEach(p=>{sc.beginPath();sc.ellipse(p[0],p[1],11,3,0,0,Math.PI*2);sc.stroke()});sc.fillStyle='#e64a3b';sc.fillRect(-7,-5,14,10);sc.fillStyle='#111';sc.fillRect(-3,5,6,5);sc.restore()}
+function demoProj(p,z,w,h){let yaw=distState.orbit.yaw,pitch=distState.orbit.pitch,zoom=distState.orbit.zoom;let x=p[0],y=p[1];let cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);let X=x*cy-y*sy,Y=x*sy+y*cy;let Y2=Y*cp+z*sp;let Z=Y*sp-z*cp;let s=Math.min(w,h)*0.24*zoom;return [w*.5+distState.orbit.panX+X*s,h*.72+distState.orbit.panY-Y2*s,Z]}
+function drawArrow(ctx,a,b,label,color='#16313b'){ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();let ang=Math.atan2(b[1]-a[1],b[0]-a[0]),L=10;ctx.beginPath();ctx.moveTo(b[0],b[1]);ctx.lineTo(b[0]-L*Math.cos(ang-.4),b[1]-L*Math.sin(ang-.4));ctx.lineTo(b[0]-L*Math.cos(ang+.4),b[1]-L*Math.sin(ang+.4));ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(a[0]+L*Math.cos(ang-.4),a[1]+L*Math.sin(ang-.4));ctx.lineTo(a[0]+L*Math.cos(ang+.4),a[1]+L*Math.sin(ang+.4));ctx.closePath();ctx.fill();if(label){ctx.font='bold 12px sans-serif';ctx.fillText(label,(a[0]+b[0])/2+6,(a[1]+b[1])/2-8)}}
+function updateDistanceMetrics(){let N=val('scale'),p=distState.overlap/100,photoIn=9,groundSideM=photoIn*0.0254*N,overlapM=groundSideM*p,distM=groundSideM*(1-p);$('dPhotoSize').textContent=photoIn.toFixed(1)+' in';$('dGroundSide').textContent=groundSideM.toFixed(1)+' m';$('dOverlapAmt').textContent=overlapM.toFixed(1)+' m';$('dPhotoDist').textContent=distM.toFixed(1)+' m'}
+function drawDistanceDemo(){updateDistanceMetrics();let box=dist3d.getBoundingClientRect(); if(box.width<10||box.height<10) return; let {w,h}=fit(dist3d,dc);dc.clearRect(0,0,w,h);let sky=dc.createLinearGradient(0,0,0,h);sky.addColorStop(0,'#d7eef9');sky.addColorStop(.56,'#f1fbfb');sky.addColorStop(.57,'#c9dfad');sky.addColorStop(1,'#9bb67e');dc.fillStyle=sky;dc.fillRect(0,0,w,h);
+  let N=val('scale'),p=distState.overlap/100,groundSideM=9*0.0254*N,distM=groundSideM*(1-p),ovM=groundSideM*p;
+  let side=2.0;
+  let gap=side*(1-p);
+  let c1=[-gap/2,0],c2=[gap/2,0];
+  dc.strokeStyle='#6e8b6555'; dc.lineWidth=1;
+  for(let i=-3;i<=3;i+=0.5){let a=demoProj([-3.2,i],0,w,h),b=demoProj([3.2,i],0,w,h);dc.beginPath();dc.moveTo(a[0],a[1]);dc.lineTo(b[0],b[1]);dc.stroke();a=demoProj([i,-2.4],0,w,h);b=demoProj([i,2.4],0,w,h);dc.beginPath();dc.moveTo(a[0],a[1]);dc.lineTo(b[0],b[1]);dc.stroke()}
+  function sq(c){let s=side/2;return [[c[0]-s,c[1]-s],[c[0]+s,c[1]-s],[c[0]+s,c[1]+s],[c[0]-s,c[1]+s]]}
+  function drawPoly(pts,fill,stroke){dc.beginPath();pts.forEach((p,i)=>i?dc.lineTo(p[0],p[1]):dc.moveTo(p[0],p[1]));dc.closePath();dc.fillStyle=fill;dc.fill();dc.strokeStyle=stroke;dc.lineWidth=2;dc.stroke()}
+  let left=Math.max(c1[0]-side/2,c2[0]-side/2), right=Math.min(c1[0]+side/2,c2[0]+side/2), bottom=-side/2, top=side/2;
+  let g1=sq(c1).map(p=>demoProj(p,0.02,w,h)), g2=sq(c2).map(p=>demoProj(p,0.02,w,h));
+  if(right>left){let gov=[[left,bottom],[right,bottom],[right,top],[left,top]].map(p=>demoProj(p,0.03,w,h)); drawPoly(gov,'#ff7b0066','#d66a00');}
+  drawPoly(g1,'#f0a62938','#c68c17'); drawPoly(g2,'#2e8bff30','#236ec7');
+  let H=1.75; let d1=demoProj(c1,H,w,h), d2=demoProj(c2,H,w,h);
+  [ [c1,d1,'Photo 1'], [c2,d2,'Photo 2'] ].forEach(([c,d,label])=>{sq(c).map(p=>demoProj(p,0.02,w,h)).forEach(g=>{dc.beginPath();dc.moveTo(d[0],d[1]);dc.lineTo(g[0],g[1]);dc.strokeStyle='#d8a54788';dc.stroke()}); drawDroneMini(d[0],d[1]); dc.fillStyle='#16313b'; dc.font='bold 12px sans-serif'; dc.fillText(label,d[0]-22,d[1]-18);});
+  let a1=demoProj([c1[0],-1.15],0.01,w,h), a2=demoProj([c2[0],-1.15],0.01,w,h); drawArrow(dc,a1,a2,'Photo distance = '+distM.toFixed(1)+' m','#0b4f8a');
+  let b1=demoProj([c1[0]-side/2,1.25],0.01,w,h), b2=demoProj([c1[0]+side/2,1.25],0.01,w,h); drawArrow(dc,b1,b2,'One photo ground length = '+groundSideM.toFixed(1)+' m','#8a5d00');
+  if(right>left){let o1=demoProj([left,0],0.04,w,h), o2=demoProj([right,0],0.04,w,h); drawArrow(dc,o1,o2,'Overlap = '+ovM.toFixed(1)+' m','#a64600');}
+  dc.fillStyle='#16313b'; dc.font='bold 18px sans-serif'; dc.fillText('Interactive forward-overlap 3D scene',16,28);
+  dc.font='13px sans-serif';
+  dc.fillText('Formula 1: ground photo length = 9 in × scale = 9 × '+N.toFixed(0)+' in = '+groundSideM.toFixed(1)+' m',16,h-66);
+  dc.fillText('Formula 2: photo distance = ground photo length × (1 − overlap) = '+groundSideM.toFixed(1)+' × (1 − '+p.toFixed(2)+') = '+distM.toFixed(1)+' m',16,h-44);
+  dc.fillText('Adjust the overlap slider to see how the two footprints move and how the shared overlap area changes.',16,h-22);
+}
+function drawDroneMini(x,y){dc.save();dc.translate(x,y);dc.strokeStyle='#222';dc.lineWidth=2.2;dc.beginPath();dc.moveTo(-13,-7);dc.lineTo(13,7);dc.moveTo(-13,7);dc.lineTo(13,-7);dc.stroke();[[-14,-8],[14,8],[-14,8],[14,-8]].forEach(p=>{dc.beginPath();dc.ellipse(p[0],p[1],7,2.2,0,0,Math.PI*2);dc.stroke()});dc.fillStyle='#e64a3b';dc.fillRect(-5,-4,10,8);dc.fillStyle='#111';dc.fillRect(-2,4,4,4);dc.restore()}
+function drawAll(){drawMap();drawScene()}
+function animate(t){if(state.playing&&plan.stations.length){let dt=(t-state.last)/1000;state.anim+=dt*(+ $('speed').value)*.65;if(state.anim>=plan.stations.length-1){state.anim=plan.stations.length-1;state.playing=false}drawAll()}state.last=t;requestAnimationFrame(animate)}
+$('play').onclick=()=>{state.step=6;document.querySelectorAll('.step').forEach((x,i)=>x.classList.toggle('active',i===6));teach();state.playing=true};$('pause').onclick=()=>state.playing=false;$('stepBtn').onclick=()=>{state.playing=false;state.anim=Math.min(plan.stations.length-1,Math.floor(state.anim)+1);drawAll()};$('restart').onclick=()=>{state.playing=false;state.anim=0;drawAll()};
+$('editSite').onclick=()=>{state.edit=!state.edit;$('editSite').textContent=state.edit?'✓ Finish editing':'✏️ Edit vertices';drawAll()};$('newSite').onclick=()=>{let w=300+Math.random()*80,h=220+Math.random()*70,notch=45+Math.random()*35;let L=-w/2,R=w/2,B=-h/2,T=h/2;state.site=[[L,B],[R-notch,B],[R-notch,B+35],[R,B+35],[R,T],[L+notch,T],[L+notch,T-30],[L,T-30]];recalc()};$('resetView').onclick=()=>{state.orbit={yaw:-.65,pitch:.58,zoom:1,panX:0,panY:0};drawAll()};
+let dragV=-1;map.addEventListener('pointerdown',e=>{if(!state.edit)return;let r=map.getBoundingClientRect(),q=[e.clientX-r.left,e.clientY-r.top];dragV=state.site.map((p,i)=>({i,d:Math.hypot(...(()=>{let s=state.mapT.to(p);return[s[0]-q[0],s[1]-q[1]]})())})).sort((a,b)=>a.d-b.d)[0]?.i??-1;map.setPointerCapture(e.pointerId)});map.addEventListener('pointermove',e=>{if(dragV<0||!state.edit)return;let r=map.getBoundingClientRect();state.site[dragV]=state.mapT.from([e.clientX-r.left,e.clientY-r.top]);recalc()});map.addEventListener('pointerup',()=>dragV=-1);
+scene.addEventListener('contextmenu',e=>e.preventDefault());scene.addEventListener('pointerdown',e=>{state.drag={x:e.clientX,y:e.clientY,mode:(e.shiftKey||e.button===2||e.button===1)?'pan':'orbit'};scene.setPointerCapture(e.pointerId)});scene.addEventListener('pointermove',e=>{if(!state.drag)return;let dx=e.clientX-state.drag.x,dy=e.clientY-state.drag.y;if(state.drag.mode==='pan'){state.orbit.panX+=dx;state.orbit.panY+=dy}else{state.orbit.yaw+=dx*.008;state.orbit.pitch=Math.max(.15,Math.min(1.25,state.orbit.pitch+dy*.006))}state.drag.x=e.clientX;state.drag.y=e.clientY;drawScene()});scene.addEventListener('pointerup',()=>state.drag=null);scene.addEventListener('pointercancel',()=>state.drag=null);scene.addEventListener('wheel',e=>{e.preventDefault();state.orbit.zoom=Math.max(.3,Math.min(3.5,state.orbit.zoom*Math.exp(-e.deltaY*.001)));drawScene()},{passive:false});
+dist3d.addEventListener('contextmenu',e=>e.preventDefault());dist3d.addEventListener('pointerdown',e=>{distState.drag={x:e.clientX,y:e.clientY,mode:(e.shiftKey||e.button===2||e.button===1)?'pan':'orbit'};dist3d.setPointerCapture(e.pointerId)});dist3d.addEventListener('pointermove',e=>{if(!distState.drag)return;let dx=e.clientX-distState.drag.x,dy=e.clientY-distState.drag.y;if(distState.drag.mode==='pan'){distState.orbit.panX+=dx;distState.orbit.panY+=dy}else{distState.orbit.yaw+=dx*.008;distState.orbit.pitch=Math.max(.15,Math.min(1.3,distState.orbit.pitch+dy*.006))}distState.drag.x=e.clientX;distState.drag.y=e.clientY;drawDistanceDemo()});dist3d.addEventListener('pointerup',()=>distState.drag=null);dist3d.addEventListener('pointercancel',()=>distState.drag=null);dist3d.addEventListener('wheel',e=>{e.preventDefault();distState.orbit.zoom=Math.max(.35,Math.min(3.5,distState.orbit.zoom*Math.exp(-e.deltaY*.001)));drawDistanceDemo()},{passive:false});
+window.addEventListener('resize',()=>{drawAll();drawDistanceDemo()});updateMetrics();drawDistanceDemo();requestAnimationFrame(animate);
+})();
+</script>
+</body></html>
