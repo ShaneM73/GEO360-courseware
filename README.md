@@ -2,7 +2,7 @@
 
 Interactive teaching modules for **GEO 360 – Aerial Photo Interpretation**, integrated into a single web app with a guided learning path.
 
-### 🌐 Launch the courseware: **[shanem73.github.io/geo360-courseware](https://shanem73.github.io/geo360-courseware/)**
+### 🌐 Launch the courseware: **[shanem73.github.io/GEO360-courseware](https://shanem73.github.io/GEO360-courseware/)**
 
 Open `index.html` (or the GitHub Pages URL) to start. Every module is also a standalone page in `modules/` and can be linked or projected on its own.
 
@@ -36,9 +36,9 @@ data/                 supporting data (KML)
 
 1. Push this folder to the `GEO360-courseware` repository.
 2. **Settings → Pages → Build and deployment → Deploy from a branch**, choose `main` and `/ (root)`.
-3. The site appears at `https://<your-username>.github.io/GEO360-courseware/`.
+3. The site appears at `https://shanem73.github.io/GEO360-courseware/`.
 
-Deep links work per module, e.g. `.../GEO360-courseware/#/stereo-parallax`.
+Deep links work per module, e.g. `https://shanem73.github.io/GEO360-courseware/#/stereo-parallax`.
 
 ## Adding or reordering modules
 
