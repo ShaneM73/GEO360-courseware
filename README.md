@@ -2,6 +2,8 @@
 
 Interactive teaching modules for **GEO 360 – Aerial Photo Interpretation**, integrated into a single web app with a guided learning path.
 
+### 🌐 Launch the courseware: **[shanem73.github.io/geo360-courseware](https://shanem73.github.io/geo360-courseware/)**
+
 Open `index.html` (or the GitHub Pages URL) to start. Every module is also a standalone page in `modules/` and can be linked or projected on its own.
 
 ## Learning path
